@@ -1,0 +1,5 @@
+% Generado aleatoriamente (semilla 2): 25 cuadrados en 14 x 11
+ancho = 14;
+alto  = 11;
+n     = 25;
+lado  = [6, 5, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];

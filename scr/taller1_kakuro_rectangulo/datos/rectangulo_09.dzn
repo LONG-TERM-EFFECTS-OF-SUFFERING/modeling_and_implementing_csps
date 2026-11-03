@@ -1,0 +1,5 @@
+% INFACTIBLE: las áreas suman 63 = 9 x 7, pero no hay forma de acomodarlos
+ancho = 9;
+alto  = 7;
+n     = 14;
+lado  = [3, 3, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1];

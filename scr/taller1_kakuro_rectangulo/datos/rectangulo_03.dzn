@@ -1,0 +1,5 @@
+% Rectángulo perfecto de orden 9: 9 cuadrados distintos en 69 x 61
+ancho = 69;
+alto  = 61;
+n     = 9;
+lado  = [36, 33, 28, 25, 16, 9, 7, 5, 2];

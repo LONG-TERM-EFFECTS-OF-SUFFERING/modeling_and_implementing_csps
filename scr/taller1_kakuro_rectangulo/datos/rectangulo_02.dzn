@@ -1,0 +1,5 @@
+% Rectángulo perfecto de Moroń (1925): 9 cuadrados distintos en 33 x 32
+ancho = 33;
+alto  = 32;
+n     = 9;
+lado  = [18, 15, 14, 10, 9, 8, 7, 4, 1];

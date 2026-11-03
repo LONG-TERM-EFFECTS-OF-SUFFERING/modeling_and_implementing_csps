@@ -1,0 +1,5 @@
+% INFACTIBLE: las áreas suman 100 = 10 x 10, pero no hay forma de acomodarlos
+ancho = 10;
+alto  = 10;
+n     = 15;
+lado  = [5, 4, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1, 1];

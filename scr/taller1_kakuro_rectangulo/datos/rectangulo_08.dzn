@@ -1,0 +1,5 @@
+% Mismos cuadrados que rectangulo_06, pero en 22 x 7 (factible; muchas simetrías)
+ancho = 22;
+alto  = 7;
+n     = 25;
+lado  = [6, 5, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
