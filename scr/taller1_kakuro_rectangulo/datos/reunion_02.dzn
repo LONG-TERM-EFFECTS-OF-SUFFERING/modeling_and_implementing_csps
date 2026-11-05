@@ -1,0 +1,4 @@
+personas = ["Andres", "Beatriz", "Carlos", "Daniel"];
+next = [|1, 2 | 3, 4|]; % Andres junto a Beatriz, Carlos junto a Daniel
+separate = [|1, 4|];    % Andres lejos de Daniel
+distance = [|2, 3, 1|]; % Beatriz y Carlos a maximo 1 persona de distancia

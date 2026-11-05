@@ -1,0 +1,4 @@
+personas = ["Hugo", "Paco", "Luis", "Daisy", "Donald", "Mickey", "Minni", "Pluto"];
+next = [|5, 6 | 6, 7|]; % Bloque de Disney junto
+separate = [|1, 5 | 2, 5 | 3, 5|]; % Los tres primeros lejos de Donald
+distance = [|4, 8, 2|]; % Daisy y Pluto cerca

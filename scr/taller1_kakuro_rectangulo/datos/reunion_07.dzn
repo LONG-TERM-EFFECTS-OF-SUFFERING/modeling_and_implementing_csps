@@ -1,0 +1,4 @@
+personas = ["Andres", "Felipe", "Santiago", "Camilo", "Valeria"];
+next = [|1, 2 | 2, 3|]; % Andres, Felipe y Santiago deben ir en bloque continuo
+separate = [|4, 5 | 1, 5|]; 
+distance = [|3, 4, 1|]; % Santiago y Camilo muy cerca

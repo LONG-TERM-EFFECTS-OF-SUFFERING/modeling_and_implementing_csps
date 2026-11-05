@@ -1,0 +1,4 @@
+personas = ["Juan", "Maria", "Lucas", "Laura", "Diego", "Camila", "Mateo"];
+next = [|1, 2 | 3, 4 | 5, 6|];
+separate = [|1, 7 | 2, 7 | 3, 7|]; % Mateo (7) no quiere estar al lado de los tres primeros
+distance = [|1, 2, 1|];
