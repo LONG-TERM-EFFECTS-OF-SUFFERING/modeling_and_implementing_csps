@@ -2,7 +2,7 @@
 % Taller 1 - Programación por Restricciones
 % Ejercicio 2.4: Acertijo Lógico
 % Autores: <Orlando Alexis Rengifo Mejia>
-% Uso:     minizinc --solver gecode -s acertijo.mzn datos/acertijo_01.dzn -D "impl=1;strategy=1"
+% Uso:     minizinc --solver gecode -s acertijo.mzn tests/acertijo_01.dzn -D "impl=1;strategy=1"
 %
 % Implementaciones (impl):
 %   1 = Restricciones de unicidad con desigualdades tradicionales (!=)

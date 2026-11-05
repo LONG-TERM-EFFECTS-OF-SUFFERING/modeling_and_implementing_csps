@@ -1,0 +1,255 @@
+\subsection{Kakuro}
+
+\subsubsection{Descripción del problema}
+
+Un Kakuro es una cuadrícula de casillas blancas y negras. Algunas casillas negras tienen pistas: el número inferior izquierdo es la suma de las casillas blancas consecutivas que están debajo, y el superior derecho es la suma de las que están a la derecha. Llamamos \textbf{serie} a cada uno de estos grupos de casillas blancas, que termina en la siguiente casilla negra o en el borde. Hay que escribir en cada casilla blanca un dígito del 1 al 9 de modo que cada serie sume su pista y no repita dígitos.
+
+\subsubsection{Modelo}
+
+\paragraph{Parámetros}
+
+Los datos de entrada son los siguientes:
+
+\begin{itemize}
+    \item $F, C \in \mathbb{N}$: número de filas y de columnas del tablero.
+    \item $\mathit{blanca}_{ij} \in \{0, 1\}$: vale 1 si la casilla $(i, j)$ se debe llenar.
+    \item $\mathit{pV}_{ij}, \mathit{pH}_{ij} \in \mathbb{N}$: pista vertical y horizontal de la casilla $(i, j)$; 0 si no tiene.
+\end{itemize}
+
+A partir de estos datos se calculan los siguientes parámetros derivados, que siguen siendo constantes del problema y no variables:
+
+\begin{itemize}
+    \item $B$: conjunto de casillas blancas, numeradas $1, \dots, |B|$ en orden de lectura.
+    \item $S$: conjunto de series, una por cada pista. Para cada $s \in S$, $C_s \subseteq B$ es el conjunto de sus casillas, $\sigma_s$ su pista y $L_s = |C_s|$ su largo. $C_s$ se obtiene recorriendo desde la casilla de la pista, hacia la derecha o hacia abajo, hasta la siguiente casilla negra o el borde.
+\end{itemize}
+
+El tablero se escribe en el archivo de datos como tres matrices del tamaño del dibujo (\texttt{blanca}, \texttt{pistaV}, \texttt{pistaH}). Este formato se puede revisar casilla por casilla contra el dibujo del enunciado. Las series se calculan en el modelo para no tener que escribirlas a mano, que es la principal fuente de errores al transcribir un tablero. Cuatro aserciones validan los datos: ninguna casilla blanca tiene pista; cada serie tiene entre 1 y 9 casillas; cada pista está entre la menor y la mayor suma posible para su largo, $L(L+1)/2 \le \sigma \le L(19-L)/2$; y cada casilla blanca pertenece a exactamente una serie horizontal y una vertical.
+
+\paragraph{Variables y dominios}
+
+$x_c \in \{1, \dots, 9\}$ para cada $c \in B$: dígito escrito en la casilla blanca $c$.
+
+Solo las casillas blancas tienen variable, porque solo ellas llevan un valor desconocido. El dominio es exactamente el que fija el enunciado, sin el 0. Para el tablero 1 el modelo tiene $|B| = 14$ variables y $|S| = 10$ series; para el tablero 2, 24 variables y 20 series.
+
+\paragraph{Restricciones}
+
+\textbf{R1 (suma de cada serie).} Cada serie suma el valor de su pista:
+\[
+    \forall s \in S:\quad \sum_{c \in C_s} x_c = \sigma_s
+\]
+
+\textbf{R2 (dígitos distintos en cada serie).} Ningún dígito se repite dentro de una serie:
+\[
+    \forall s \in S,\ \forall c, c' \in C_s,\ c \neq c':\quad x_c \neq x_{c'}
+\]
+
+R1 y R2 son exactamente las dos condiciones del enunciado, y el dominio de $x_c$ cubre la tercera (dígitos del 1 al 9). Por eso el modelo es adecuado: toda asignación que cumple R1 y R2 es una solución del Kakuro, y toda solución del Kakuro cumple R1 y R2.
+
+\paragraph{Restricciones redundantes}
+
+Sea $\mathrm{Comb}(L, \sigma)$ la familia de conjuntos de $L$ dígitos distintos de $\{1, \dots, 9\}$ que suman $\sigma$, y sea $P_s$ la unión de los conjuntos de $\mathrm{Comb}(L_s, \sigma_s)$: los dígitos que pueden aparecer en la serie $s$.
+
+\textbf{RR1 (dígitos posibles de cada serie).}
+\[
+    P_s = \bigcup \mathrm{Comb}(L_s, \sigma_s), \qquad \forall s \in S,\ \forall c \in C_s:\quad x_c \in P_s
+\]
+
+\textit{Por qué es redundante.} En cualquier solución, los valores de la serie $s$ son $L_s$ dígitos distintos (R2) que suman $\sigma_s$ (R1). Forman entonces un conjunto $D \in \mathrm{Comb}(L_s, \sigma_s)$, y cada $x_c$ pertenece a $D \subseteq P_s$. Toda solución de $\mathrm{R1} \land \mathrm{R2}$ cumple RR1, así que agregarla no elimina soluciones.
+
+\textit{Por qué poda el espacio de búsqueda.} La propagación de una suma razona solo con las cotas de los dominios, y la de \texttt{alldifferent} no conoce la suma; ninguna de las dos detecta qué combinaciones existen. En el tablero 1, la serie vertical de pista 34 tiene 5 casillas. Por cotas, cada casilla debe valer al menos $34 - 4 \cdot 9 = -2$, lo que no elimina ningún valor. Sin embargo, la suma máxima de 5 dígitos distintos es $35 = 9 + 8 + 7 + 6 + 5$, y la única forma de obtener 34 es $\{4, 6, 7, 8, 9\}$. RR1 elimina los valores 1, 2, 3 y 5 de esas cinco casillas antes de empezar a buscar. Con RR1 los dos tableros del enunciado se resuelven sin ningún nodo de búsqueda (ver Análisis de resultados).
+
+Como RR1 depende solo de los datos, $P_s$ se calcula una vez por serie antes de la búsqueda, recorriendo los 512 subconjuntos de $\{1, \dots, 9\}$.
+
+\paragraph{Ruptura de simetrías}
+
+No se definieron restricciones de ruptura de simetrías, porque el problema no tiene simetrías que romper. Una simetría sería una transformación que convierte toda solución de una instancia en otra solución de la misma instancia. En el Kakuro cada pista está asociada a una posición fija del tablero. Por eso permutar filas, columnas o dígitos cambia el valor de alguna suma, y ninguna transformación general preserva las soluciones. Además, un Kakuro bien planteado tiene solución única. Lo verificamos recorriendo el árbol de búsqueda completo: los dos tableros del enunciado y los seis tableros reales de prueba tienen exactamente una solución. Cuando un tablero tiene varias soluciones, la causa es su configuración particular y no una simetría del modelo. Por ejemplo, en un bloque de $2 \times 2$ casillas a veces se puede sumar $k$ en una diagonal y restarlo en la otra sin cambiar ninguna suma.
+
+\subsubsection{Detalles de implementación}
+
+Las variables $x$ se implementaron como un arreglo indexado por el número de cada casilla blanca, junto con una matriz de parámetros que traduce cada posición $(i, j)$ del tablero a ese número. Cada serie se representa como el conjunto de números de sus casillas. Así las casillas negras no generan variables y las restricciones se escriben igual para cualquier forma de tablero.
+
+Se implementaron cuatro variantes de R1 y R2 (parámetro \texttt{impl}), resumidas en la Tabla~\ref{tab:kakuro-impl}. Todas aceptan exactamente las mismas soluciones y difieren en cuánto propagan y en cuánto cuesta construirlas. Cada variante agrega un solo elemento a la anterior, para poder medir el efecto de cada uno.
+
+\begin{table}[htbp]
+    \caption{Implementaciones de las restricciones del Kakuro}
+    \label{tab:kakuro-impl}
+    \small
+    \begin{tabularx}{\textwidth}{@{}cLLLL@{}}
+        \toprule
+        \texttt{impl} & R1 & R2 & Ventajas & Desventajas \\
+        \midrule
+        1 & Suma lineal & Desigualdad $x \neq y$ para cada par de casillas de la serie & Traducción directa de la definición & Cada desigualdad actúa solo cuando una de sus dos variables está fija; $L(L-1)/2$ restricciones por serie \\
+        2 & Suma lineal & \texttt{alldifferent} sobre la serie & Razona sobre toda la serie a la vez; una restricción por serie & No usa la información de la suma \\
+        3 & Suma lineal + RR1 & \texttt{alldifferent} & Usa las combinaciones válidas de cada serie; resuelve los tableros reales sin búsqueda & Requiere precalcular $P_s$ \\
+        4 & \texttt{table} en las series de hasta 5 casillas; \texttt{impl} 3 en las demás & (incluida en la tabla) & La máxima poda posible en cada serie aislada (consistencia de arco generalizada) & El tamaño de la tabla crece como $L!$; mayor tiempo de compilación \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\textbf{Diferencia entre \texttt{alldifferent} y las desigualdades por pares.} Con tres variables de dominio $\{1, 2\}$ que deben tomar valores distintos, \texttt{alldifferent} detecta en la raíz que tres variables no caben en dos valores: falla con 0 nodos. Las tres desigualdades no fallan mientras ninguna variable esté fija, y Gecode necesita 3 nodos y 2 fallos para llegar a la misma conclusión.
+
+\textbf{Implementación de \texttt{table} (\texttt{impl} 4).} Para cada serie se construye la tabla de todas sus tuplas válidas: cada conjunto de $\mathrm{Comb}(L_s, \sigma_s)$ en cada uno de sus $L_s!$ órdenes. La serie de pista 34 del tablero 1 tiene un solo conjunto, $\{4, 6, 7, 8, 9\}$, y por lo tanto $5! = 120$ tuplas. Una serie de 9 casillas tiene $9! = 362\,880$ tuplas. En una primera versión, con \texttt{table} en todas las series, compilar el tablero aleatorio de $12 \times 12$ tomaba 11,7~s, y los de $15 \times 15$ y $20 \times 20$ no terminaban de compilar en 20~s. Por eso \texttt{table} se usa solo en las series de hasta 5 casillas (parámetro \texttt{maxTabla}), y las series más largas usan la variante 3. Con este límite, el tablero de $12 \times 12$ compila en 0,65~s.
+
+\textbf{Cálculo de RR1.} Los subconjuntos de $\{1, \dots, 9\}$ se representan como los enteros $0, \dots, 511$, donde el bit $d - 1$ indica si el dígito $d$ pertenece al subconjunto. El cardinal y la suma de cada subconjunto se calculan una sola vez; $\mathrm{Comb}(L, \sigma)$ son los subconjuntos con cardinal $L$ y suma $\sigma$, y $P_s$ es su unión. Con este precálculo la compilación de la variante 3 toma unos 0,2~s en todos los tableros.
+
+\subsubsection{Estrategias de búsqueda}
+
+Se definieron tres estrategias (parámetro \texttt{strategy}) sobre el arreglo $x$, cuyas casillas están en orden de lectura (Tabla~\ref{tab:kakuro-estrategias}).
+
+\begin{table}[htbp]
+    \caption{Estrategias de búsqueda del Kakuro}
+    \label{tab:kakuro-estrategias}
+    \small
+    \begin{tabularx}{\textwidth}{@{}cllL@{}}
+        \toprule
+        \texttt{strategy} & Selección de variable & Selección de valor & Justificación \\
+        \midrule
+        1 & \texttt{input\_order} & \texttt{indomain\_min} & Línea base: llena el tablero fila por fila con el menor dígito posible, sin usar la información de la propagación \\
+        2 & \texttt{first\_fail} & \texttt{indomain\_min} & Elige la casilla con menos dígitos posibles, la más restringida. Aprovecha que, con RR1, los dominios son muy distintos entre sí (desde un solo valor hasta $\{1, \dots, 9\}$) \\
+        3 & \texttt{dom\_w\_deg} & \texttt{indomain\_split} & Divide el tamaño del dominio por el número de fallos causados por las restricciones de la variable, así que se concentra en las zonas del tablero donde está la dificultad. \texttt{indomain\_split} parte el dominio en dos mitades en vez de fijar un valor, una decisión menos comprometida \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Se esperaba que la estrategia 1 sirviera solo como referencia, que la 2 funcionara bien junto con RR1 y que la 3 fuera la más robusta en los tableros grandes. El análisis de resultados contrasta estas hipótesis con las mediciones.
+
+\subsubsection{Pruebas}
+
+Se usaron 11 instancias (Tabla~\ref{tab:kakuro-instancias}). Las ocho primeras son Kakuros reales y sirven para verificar la corrección; las tres últimas son tableros grandes que obligan a buscar y permiten comparar las estrategias.
+
+\begin{table}[htbp]
+    \caption{Instancias de prueba del Kakuro}
+    \label{tab:kakuro-instancias}
+    \small
+    \begin{tabularx}{\textwidth}{@{}lLlcL@{}}
+        \toprule
+        Instancias & Origen & Tamaño & Casillas blancas & Objetivo de la prueba \\
+        \midrule
+        \texttt{kakuro\_01}, \texttt{02} & Enunciado & $6 \times 5$ y $8 \times 8$ & 14 y 24 & Corrección del modelo \\
+        \texttt{kakuro\_03}--\texttt{05} & Repositorio \textit{minizinc-benchmarks} \parencite{minizinc-benchmarks} ($6 \times 6$ \textit{easy}, \textit{hard}, \textit{super}) & $6 \times 6$ & 16--18 & Tableros reales de dificultad creciente \\
+        \texttt{kakuro\_06}--\texttt{08} & Mismo repositorio ($8 \times 8$ \textit{easy}, \textit{hard}, \textit{super}) & $8 \times 8$ & 26--38 & Igual; \texttt{08} tiene series de 7 casillas \\
+        \texttt{kakuro\_09}--\texttt{11} & Generados al azar a partir de un relleno válido & $12 \times 12$, $15 \times 15$, $20 \times 20$ & 77, 113, 226 & Forzar búsqueda y comparar estrategias \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Las pruebas de corrección fueron tres. Primero, la solución de cada instancia se verificó con el script independiente descrito en la metodología experimental. Segundo, las cuatro implementaciones encontraron la misma solución en los ocho tableros reales. Tercero, al recorrer el árbol completo, cada uno de esos ocho tableros tiene exactamente una solución, como corresponde a un Kakuro bien planteado. Los tableros aleatorios tienen más de una solución, porque su generador no garantiza unicidad; por eso se usan solo para medir el esfuerzo de búsqueda.
+
+La Tabla~\ref{tab:kakuro-solucion} muestra la solución del tablero 1 del enunciado.
+
+\begin{table}[htbp]
+    \caption{Solución del tablero 1 del enunciado ($\blacksquare$ = casilla negra)}
+    \label{tab:kakuro-solucion}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+                & Col. 2         & Col. 3 & Col. 4         & Col. 5         \\
+        \midrule
+        Fila 2 & 2              & 6      & 1              & $\blacksquare$ \\
+        Fila 3 & 1              & 9      & 3              & $\blacksquare$ \\
+        Fila 4 & 6              & 7      & $\blacksquare$ & $\blacksquare$ \\
+        Fila 5 & $\blacksquare$ & 4      & 2              & 1              \\
+        Fila 6 & $\blacksquare$ & 8      & 9              & 2              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{Análisis de los árboles de búsqueda}
+
+Para el tablero 1 se recorrió el árbol completo con la estrategia 1, buscando todas las soluciones (Tabla~\ref{tab:kakuro-arbol}).
+
+\begin{table}[htbp]
+    \caption{Árbol completo del tablero 1 con la estrategia 1}
+    \label{tab:kakuro-arbol}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        \texttt{impl}                & Nodos & Fallos & Profundidad máxima & Soluciones \\
+        \midrule
+        1 (pares)                    & 17    & 8      & 3                  & 1          \\
+        2 (\texttt{alldifferent})    & 9     & 4      & 2                  & 1          \\
+        3 (+ RR1)                    & 1     & 0      & 0                  & 1          \\
+        4 (+ \texttt{table})         & 1     & 0      & 0                  & 1          \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% TODO Figura: captura de Gecode Gist del tablero 1 con impl 2 y strategy 1
+% TODO Figura: captura de Gecode Gist del tablero 1 con impl 3 y strategy 1
+
+Con \texttt{impl} 1 y 2 el árbol es poco profundo (2 o 3 decisiones), pero casi la mitad de sus nodos son fallos. El solver descubre que eligió mal un dígito solo después de fijar una o dos casillas más. Con \texttt{impl} 3 el árbol se reduce a la raíz: la propagación por sí sola fija las 14 casillas. La propagación sigue esta cadena:
+
+\begin{enumerate}
+    \item RR1 reduce la casilla de la fila 5 y columna 3 a $\{1, 2, 4\} \cap \{4, 6, 7, 8, 9\} = \{4\}$, y la de la fila 6 y columna 5 a $\{2, \dots, 9\} \cap \{1, 2\} = \{2\}$.
+    \item Esos dos valores fijan, por suma, el resto de la esquina inferior: 1, 2, 9 y 8.
+    \item Con 4 y 8 ya usados en la serie de pista 34, \texttt{alldifferent} deja la casilla superior de esa serie en 6.
+    \item La propagación continúa por las sumas hasta completar el tablero.
+\end{enumerate}
+
+Sin RR1, la suma de 34 solo conoce cotas y no puede deducir el 4 del paso 1; por eso el solver necesita ramificar.
+
+En los tableros grandes los árboles son profundos y estrechos. En el de $20 \times 20$ con la estrategia 3, la profundidad máxima es de 170 decisiones con \texttt{impl} 2, 145 con \texttt{impl} 3 y 135 con \texttt{impl} 4. En todos los casos el número de fallos es cercano a la mitad del número de nodos: casi cada decisión tiene una rama que falla. Una propagación más fuerte acorta el árbol (de 170 a 135 niveles), pero, como se analiza a continuación, no siempre reduce el número de nodos.
+
+\subsubsection{Análisis de resultados}
+
+\textbf{Tableros reales.} La Tabla~\ref{tab:kakuro-reales} muestra los nodos para encontrar la solución con la estrategia 1. En estos tableros todas las corridas tardan menos de 1~ms de búsqueda, así que la comparación se hace con el número de nodos.
+
+\begin{table}[htbp]
+    \caption{Nodos para encontrar la solución de los tableros reales con la estrategia 1}
+    \label{tab:kakuro-reales}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        Instancia            & \texttt{impl} 1 & \texttt{impl} 2 & \texttt{impl} 3 & \texttt{impl} 4 \\
+        \midrule
+        \texttt{kakuro\_01} & 10              & 8               & 1               & 1               \\
+        \texttt{kakuro\_02} & 5               & 5               & 1               & 1               \\
+        \texttt{kakuro\_03} & 10              & 8               & 1               & 1               \\
+        \texttt{kakuro\_04} & 5               & 5               & 1               & 1               \\
+        \texttt{kakuro\_05} & 50              & 44              & 10              & 4               \\
+        \texttt{kakuro\_06} & 4               & 4               & 1               & 1               \\
+        \texttt{kakuro\_07} & 7               & 7               & 1               & 1               \\
+        \texttt{kakuro\_08} & 88              & 51              & 7               & 5               \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Tableros grandes.} La Tabla~\ref{tab:kakuro-grandes} muestra los nodos por implementación y estrategia; \enquote{$>60$~s} indica que se alcanzó el límite, con los nodos explorados entre paréntesis (M = millones).
+
+\begin{table}[htbp]
+    \caption{Nodos en los tableros grandes por implementación y estrategia}
+    \label{tab:kakuro-grandes}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        Instancia                                & \texttt{impl} & \texttt{strategy} 1          & \texttt{strategy} 2          & \texttt{strategy} 3          \\
+        \midrule
+        \texttt{kakuro\_09} ($12 \times 12$)    & 1             & 2520                         & 75                           & 4510                         \\
+                                                 & 2             & 2370                         & 75                           & 93                           \\
+                                                 & 3             & 535                          & 389                          & 335                          \\
+                                                 & 4             & 502                          & 107                          & 58                           \\
+        \addlinespace
+        \texttt{kakuro\_10} ($15 \times 15$)    & 1             & $>60$~s (12,8~M)             & $>60$~s (17,7~M)             & 12\,058                      \\
+                                                 & 2             & $>60$~s (15,3~M)             & 18,9~M (50,6~s)              & 17\,905                      \\
+                                                 & 3             & $>60$~s (14,5~M)             & 471                          & 268                          \\
+                                                 & 4             & 5,0~M (37,1~s)               & 1196                         & 68                           \\
+        \addlinespace
+        \texttt{kakuro\_11} ($20 \times 20$)    & 1             & $>60$~s (7,1~M)              & $>60$~s (13,8~M)             & 6,25~M (54,6~s)              \\
+                                                 & 2             & $>60$~s (13,9~M)             & $>60$~s (14,0~M)             & 2587                         \\
+                                                 & 3             & $>60$~s (13,0~M)             & $>60$~s (18,8~M)             & 28\,538                      \\
+                                                 & 4             & $>60$~s (8,1~M)              & $>60$~s (18,4~M)             & 1,33~M (11,0~s)              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El tiempo de compilación es de unos 0,2~s para \texttt{impl} 1 a 3 en todas las instancias. Para \texttt{impl} 4 es de 0,65~s, 0,70~s y 1,42~s en los tableros de $12 \times 12$, $15 \times 15$ y $20 \times 20$.
+
+De estos resultados se concluye lo siguiente:
+
+\begin{enumerate}
+    \item \textbf{La restricción redundante RR1 es el elemento de mayor impacto.} Al pasar de \texttt{impl} 2 a 3, el tablero 1 baja de 8 nodos a 1, y el de $15 \times 15$ con la estrategia 2 baja de 18,9 millones de nodos (50,6~s) a 471. Con RR1, seis de los ocho tableros reales se resuelven sin búsqueda.
+    \item \textbf{\texttt{alldifferent} supera a las desigualdades por pares cuando el problema es grande.} En los tableros pequeños la diferencia es de pocos nodos. En el de $20 \times 20$ con la estrategia 3, en cambio, pasa de 6,25 millones de nodos (54,6~s) a 2587 (0,014~s).
+    \item \textbf{La estrategia 1 no escala.} Con \texttt{impl} 1 a 3 no resuelve los tableros de $15 \times 15$ ni de $20 \times 20$ en 60~s. La estrategia 3 es la única que resuelve el de $20 \times 20$, con las cuatro implementaciones. La estrategia 2 funciona bien cuando RR1 diferencia los dominios (471 nodos en el de $15 \times 15$), pero no es suficiente para el de $20 \times 20$. Se confirman las hipótesis planteadas en las estrategias de búsqueda.
+    \item \textbf{Con una estrategia estática, más propagación nunca aumenta el árbol; con una adaptativa, sí puede aumentarlo.} Con la estrategia 1, el orden de las decisiones es el mismo en todas las implementaciones, y los nodos solo disminuyen ($12 \times 12$: 2520, 2370, 535, 502). Con la estrategia 3, en el tablero de $20 \times 20$, \texttt{impl} 2 necesita 2587 nodos, \texttt{impl} 3 necesita 28\,538 e \texttt{impl} 4, 1,33 millones. \texttt{dom\_w\_deg} elige las variables según los fallos acumulados; una propagación más fuerte cambia dónde ocurren los fallos y, con ellos, todo el orden de la búsqueda.
+    \item \textbf{\texttt{table} logra la poda más fuerte, a un costo.} Tiene el menor número de nodos en \texttt{kakuro\_05}, \texttt{08}, \texttt{09} y \texttt{10} (68 nodos en el de $15 \times 15$). A cambio, compila entre 3 y 6 veces más lento y es la variante menos estable en el tablero de $20 \times 20$.
+\end{enumerate}
+
+\subsubsection{Conclusiones del ejercicio}
+
+La combinación recomendada es \texttt{impl} 3 con \texttt{strategy} 3. Resuelve las 11 instancias, compila en unos 0,2~s y nunca necesita más de 0,15~s de búsqueda. El elemento decisivo del modelo es la restricción redundante RR1, que incorpora la tabla de combinaciones que usa cualquier jugador de Kakuro. \texttt{table} poda aún más en series cortas, pero su tamaño crece factorialmente con el largo de la serie, y por eso solo se justifica en series de hasta 5 casillas. Por último, los resultados muestran que la mejor estrategia depende de la implementación: las estrategias deben compararse sobre varias instancias y no sobre una sola.

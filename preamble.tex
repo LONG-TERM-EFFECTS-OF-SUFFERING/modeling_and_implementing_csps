@@ -1,61 +1,57 @@
 % ----------------------------- ENCODING AND FONT ---------------------------- %
 
-\usepackage[utf8]{inputenc} % Source file encoding
-\usepackage[T1]{fontenc}    % 8-bit fonts: proper accents (ñ, á) and hyphenation
-\usepackage{lmodern}        % Modern, scalable version of Computer Modern
+% apa7 already loads T1 fontenc and lmodern; UTF-8 is the LaTeX default
 \usepackage{microtype}      % Subtle typographical improvements
 
 % --------------------------------- LANGUAGE --------------------------------- %
 
-\usepackage[spanish]{babel}
+\usepackage[spanish,es-tabla]{babel} % es-tabla: "Tabla", not "Cuadro" (APA)
 \usepackage{csquotes}       % Context-sensitive quotes via \enquote{...}
 
 % -------------------------------- PAGE LAYOUT ------------------------------- %
 
-\usepackage{geometry}
-\geometry{
-    left=1.5cm,
-    right=1.5cm,
-    top=1.5cm,
-    bottom=1.5cm
-}
-\pagestyle{plain}
+% apa7 sets the 1in margins, double spacing and page-number header
 \emergencystretch=2em       % Reduces overfull \hbox warnings on long URLs/words
 
 % ----------------------------- MATH AND SCIENCE ----------------------------- %
 
 \usepackage{amsmath}        % Core math
 \usepackage{mathtools}      % Extends amsmath and fixes a few quirks
-\usepackage{amsfonts}
+\usepackage{amssymb}        % \mathbb, \blacksquare
 \usepackage{siunitx}        % Proper SI units: \SI{9.81}{m/s^2}
 
 % ----------------------------- GRAPHICS AND COLOR --------------------------- %
 
-\usepackage{graphicx}       % For images
+% apa7 already loads graphicx, float (with floatsintext) and caption
 \usepackage{xcolor}         % For colors
-\usepackage{float}          % For float placement [H]
-\usepackage{caption}        % For personalizing captions
 \graphicspath{{assets/}}
 
 % ---------------------------------- TABLES ---------------------------------- %
 
+% apa7 already loads booktabs and longtable
 \usepackage{multirow}       % Cells spanning multiple rows
 \usepackage{tabularx}       % For advanced tables
-\usepackage{booktabs}       % For professional tables
+\newcolumntype{L}{>{\raggedright\arraybackslash}X} % Wrapping text column
 
 % ---------------------------- ALGORITHMS AND CODE --------------------------- %
 
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+% ------------------------------- BIBLIOGRAPHY ------------------------------- %
+
+\usepackage[style=apa]{biblatex} % biber, DOI/URL and Spanish strings are defaults
+\addbibresource{bibliography.bib}
+
 % --------------------------- LINKS AND CROSS-REFS --------------------------- %
 
-\usepackage[
+% apa7 already loads hyperref, so options go here instead of \usepackage
+\hypersetup{
     colorlinks=true,
     linkcolor=blue,
     urlcolor=blue,
     citecolor=red
-]{hyperref}                 % For links (load near the end)
+}
 \usepackage{cleveref}       % Smarter \cref references (load AFTER hyperref)
 
 % ------------------------------ CUSTOM COMMANDS ----------------------------- %

@@ -2,7 +2,7 @@
 % Taller 1 - Programación por Restricciones
 % Ejercicio 2.6: Construcción de un rectángulo
 % Autores: <nombre1> (<código1>), <nombre2> (<código2>), <nombre3> (<código3>)
-% Uso:     minizinc --solver gecode -s rectangulo.mzn datos/rectangulo_01.dzn -D "impl=5;strategy=3"
+% Uso:     minizinc --solver gecode -s rectangulo.mzn tests/rectangulo_01.dzn -D "impl=5;strategy=3"
 %
 % Implementaciones (impl):
 %   1 = R2 (no solapamiento) con disyunciones explícitas

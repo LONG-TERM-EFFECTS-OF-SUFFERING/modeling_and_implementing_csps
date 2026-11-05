@@ -2,7 +2,7 @@
 % Taller 1 - Programación por Restricciones
 % Ejercicio 2.2: Kakuro
 % Autores: <nombre1> (<código1>), <nombre2> (<código2>), <nombre3> (<código3>)
-% Uso:     minizinc --solver gecode -s kakuro.mzn datos/kakuro_01.dzn -D "impl=3;strategy=3"
+% Uso:     minizinc --solver gecode -s kakuro.mzn tests/kakuro_01.dzn -D "impl=3;strategy=3"
 %
 % Implementaciones (impl):
 %   1 = R1 (sum) + R2 con desigualdades por pares (x != y)

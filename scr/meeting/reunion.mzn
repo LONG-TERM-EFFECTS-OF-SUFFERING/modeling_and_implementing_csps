@@ -2,7 +2,7 @@
 % Taller 1 - Programación por Restricciones
 % Ejercicio 2.5: Ubicación de personas en una reunión
 % Autores: <Orlando Alexis Rengifo Mejia>
-% Uso:     minizinc --solver gecode -s reunion.mzn datos/reunion_instancia1.dzn -D "impl=1;strategy=1"
+% Uso:     minizinc --solver gecode -s reunion.mzn tests/reunion_01.dzn -D "impl=1;strategy=1"
 %
 % Implementaciones (impl):
 %   1 = Restricción de unicidad con desigualdades explícitas (!=)

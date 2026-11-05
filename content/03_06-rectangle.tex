@@ -1,0 +1,275 @@
+\subsection{Rectángulo}
+
+\subsubsection{Descripción del problema}
+
+Dados $n$ cuadrados de lados conocidos y un rectángulo de ancho $W$ y alto $H$, hay que ubicar todos los cuadrados, con los lados paralelos a los ejes, de modo que no se solapen y formen exactamente el rectángulo. En el ejemplo del enunciado, seis cuadrados de lados 3, 2, 2, 1, 1, 1 forman un rectángulo de $5 \times 4$.
+
+\subsubsection{Modelo}
+
+\paragraph{Parámetros}
+
+Los datos de entrada son los siguientes:
+
+\begin{itemize}
+    \item $W, H \in \mathbb{N}$: ancho y alto del rectángulo.
+    \item $n \in \mathbb{N}$: número de cuadrados; $I = \{1, \dots, n\}$.
+    \item $s_i \in \mathbb{N}$, $i \in I$: lado del cuadrado $i$.
+\end{itemize}
+
+Dos aserciones validan los datos: cada cuadrado cabe en el rectángulo ($s_i \le \min(W, H)$), y la suma de las áreas es igual al área del rectángulo ($\sum_i s_i^2 = W \cdot H$). La segunda condición es necesaria para que el problema tenga solución y, como se muestra en las restricciones, permite deducir que no quedan huecos. También se calculan dos parámetros derivados: el orden de los cuadrados de mayor a menor lado, usado por las estrategias, y $g$, el índice del primer cuadrado de mayor lado, usado para romper simetrías.
+
+\paragraph{Variables y dominios}
+
+Cada cuadrado tiene dos variables:
+
+\begin{itemize}
+    \item $x_i \in \{0, \dots, W - s_i\}$, $i \in I$: coordenada horizontal de la esquina inferior izquierda del cuadrado $i$.
+    \item $y_i \in \{0, \dots, H - s_i\}$, $i \in I$: coordenada vertical de la esquina inferior izquierda del cuadrado $i$.
+\end{itemize}
+
+Los dominios excluyen desde el principio las posiciones en las que el cuadrado se saldría del rectángulo. En el ejemplo, el cuadrado de lado 3 solo puede empezar en $x \in \{0, 1, 2\}$ y $y \in \{0, 1\}$.
+
+Se consideró y se descartó una representación alternativa: una matriz de $W \times H$ casillas que indique qué cuadrado cubre cada casilla. Esa representación necesita $W \cdot H$ variables, además de las restricciones que las relacionan con las posiciones; para el cuadrado de $112 \times 112$ serían 12\,544 variables. La representación por coordenadas usa $2n$ variables, 42 en ese mismo caso.
+
+\paragraph{Restricciones}
+
+\textbf{R1 (dentro del rectángulo):} $x_i + s_i \le W$ y $y_i + s_i \le H$ para todo $i$. La garantizan los dominios de las variables, así que no se impone como restricción aparte.
+
+\textbf{R2 (no solapamiento).} Dos cuadrados distintos no se solapan si uno está completamente a la izquierda del otro o completamente debajo del otro:
+\[
+    \forall i, j \in I,\ i < j:\quad x_i + s_i \le x_j \;\lor\; x_j + s_j \le x_i \;\lor\; y_i + s_i \le y_j \;\lor\; y_j + s_j \le y_i
+\]
+
+Es la extensión a dos dimensiones del predicado de no solapamiento del problema de \textit{job shop}. Su forma global es \texttt{diffn(x, y, s, s)}.
+
+\textbf{R3 (sin huecos).} No se impone, porque se deduce de R1, R2 y los datos. Por R1 y R2, los cuadrados están dentro del rectángulo y sus interiores son disjuntos, así que cubren un área de $\sum_i s_i^2$. Por la aserción sobre las áreas, esa área es $W \cdot H$, el área completa del rectángulo; por lo tanto no queda ninguna región sin cubrir. Con casillas unitarias: cada cuadrado cubre $s_i^2$ casillas, ninguna casilla se cuenta dos veces, y en total se cubren $W \cdot H$ casillas, todas las del rectángulo.
+
+R1, R2 y R3 son exactamente las condiciones del enunciado (todos los cuadrados se usan, ninguno se solapa y forman el rectángulo), y la orientación paralela a los ejes está implícita en la representación por coordenadas. Por eso el modelo es adecuado al problema.
+
+\paragraph{Restricciones redundantes}
+
+Las cuatro restricciones redundantes se basan en la misma observación: como el rectángulo queda lleno, toda recta vertical lo atraviesa cubierta por cuadrados cuyos lados suman exactamente $H$. En la solución del ejemplo, una recta en las columnas 0, 1 o 2 cruza el cuadrado de lado 3 y uno de lado 1 ($3 + 1 = 4$); en las columnas 3 y 4 cruza los dos de lado 2 ($2 + 2 = 4$).
+
+\textbf{RR1 y RR2 (\texttt{cumulative} en cada eje).} Cada cuadrado se ve como una tarea que empieza en $x_i$, dura $s_i$ y consume $s_i$ unidades de un recurso de capacidad $H$; en el eje $y$, la capacidad es $W$:
+\[
+    \mathrm{RR1}:\ \mathrm{cumulative}(x, s, s, H) \qquad \mathrm{RR2}:\ \mathrm{cumulative}(y, s, s, W)
+\]
+
+\textit{Por qué son redundantes.} Considere la columna $t$. Los cuadrados que la atraviesan se solapan entre sí en el eje $x$, así que, por R2, sus intervalos en $y$ son disjuntos. Como además están contenidos en $[0, H]$ por R1, la suma de sus lados es a lo más $H$. RR2 se demuestra de la misma forma con las filas.
+
+\textit{Por qué podan.} Mientras las coordenadas $y$ no estén fijas, cada disyunción de R2 suele tener abierta una alternativa vertical (\enquote{uno encima del otro}), así que R2 casi no restringe las coordenadas $x$. \texttt{cumulative} razona sobre las $x$ sin necesidad de conocer las $y$, y detecta un conjunto de posiciones horizontales imposible antes de asignar las coordenadas verticales.
+
+\textbf{RR3 y RR4 (cobertura exacta de cada columna y cada fila).} \texttt{cumulative} solo impide que una columna tenga más de $H$ unidades cubiertas. Como no hay huecos, cada columna y cada fila deben quedar cubiertas exactamente:
+\begin{align*}
+    \mathrm{RR3}: & \quad \forall t \in \{0, \dots, W - 1\}:\ \sum_{i \,:\, x_i \le t < x_i + s_i} s_i = H \\
+    \mathrm{RR4}: & \quad \forall t \in \{0, \dots, H - 1\}:\ \sum_{i \,:\, y_i \le t < y_i + s_i} s_i = W
+\end{align*}
+
+\textit{Por qué son redundantes.} Por R3, la franja vertical entre $t$ y $t + 1$ está totalmente cubierta. Los cuadrados que la cubren tienen intervalos en $y$ disjuntos (R2) cuya unión es $[0, H]$, así que sus lados suman exactamente $H$. RR4 es análoga.
+
+\textit{Por qué podan.} Obligan a llenar el espacio en lugar de solo limitarlo. Suponga que, en el ejemplo, el cuadrado de lado 3 está en $(0, 0)$ y uno de lado 2 en $(3, 0)$. La columna 0 tiene entonces 3 de sus 4 unidades cubiertas. \texttt{cumulative} acepta dejar vacía la unidad restante. RR3, en cambio, exige que la cubra un cuadrado que atraviese la columna 0; como el otro cuadrado de lado 2 ya no cabe, deduce de inmediato que uno de los cuadrados de lado 1 debe empezar en $x = 0$.
+
+No existe una restricción global de MiniZinc que exprese una cobertura exacta, así que RR3 y RR4 se implementan con restricciones reificadas: una variable booleana por cada par cuadrado--columna. Aunque la rúbrica recomienda evitar restricciones condicionadas por los valores de las variables, aquí no hay otra forma de expresarlas, y el análisis de resultados muestra que son indispensables para resolver la instancia más difícil.
+
+\paragraph{Ruptura de simetrías}
+
+El problema tiene dos tipos de simetría:
+
+\begin{itemize}
+    \item \textbf{Cuadrados del mismo tamaño.} Intercambiar las posiciones de dos cuadrados del mismo lado produce otra solución. Si hay $m_k$ cuadrados de cada tamaño $k$, cada solución tiene $\prod_k m_k!$ copias.
+    \item \textbf{Reflejos del rectángulo.} El reflejo izquierda--derecha ($x_i \mapsto W - s_i - x_i$), el reflejo arriba--abajo ($y_i \mapsto H - s_i - y_i$) y su composición (giro de 180°) transforman soluciones en soluciones: 4 copias en total. Si $W = H$, la transposición ($x \leftrightarrow y$) da 8.
+\end{itemize}
+
+En el ejemplo del enunciado hay $2! \cdot 3! \cdot 4 = 48$ soluciones simétricas, y el modelo sin ruptura de simetrías encuentra exactamente 48. Las dos figuras del enunciado son una de ellas: la segunda es la primera girada 180°.
+
+\textbf{RS1 (cuadrados iguales).} Los cuadrados de igual lado se ordenan lexicográficamente por su posición, primero por $x$ y luego por $y$. Basta con imponerlo entre cuadrados consecutivos del mismo tamaño, porque el orden es transitivo. La desigualdad es estricta porque dos cuadrados iguales no pueden ocupar la misma posición.
+\[
+    \forall i < j \text{ consecutivos con } s_i = s_j:\quad (x_i, y_i) <_{\mathrm{lex}} (x_j, y_j)
+\]
+
+\textbf{RS2 (reflejos).} El cuadrado $g$, el primero de mayor lado, se ubica en el cuadrante inferior izquierdo:
+\[
+    2\,x_g \le W - s_g \qquad 2\,y_g \le H - s_g
+\]
+
+\textbf{RS3 (transposición).} Si $W = H$ y el cuadrado de mayor lado es único: $x_g \le y_g$.
+
+\textit{Por qué no se pierde ninguna solución esencialmente distinta.} Dada cualquier solución, se construye una que cumple RS1 y RS2 en tres pasos:
+
+\begin{enumerate}
+    \item Si el cuadrado de mayor lado más a la izquierda está en la mitad derecha, se aplica el reflejo izquierda--derecha.
+    \item Si, entre los de mayor lado con esa $x$ mínima, el más bajo está en la mitad superior, se aplica el reflejo arriba--abajo. Este reflejo no cambia las coordenadas $x$.
+    \item Se renombran los cuadrados de cada tamaño en orden lexicográfico.
+\end{enumerate}
+
+El resultado cumple RS1, y $g$ queda en la posición fijada por los pasos 1 y 2, cumpliendo RS2. Que RS1 ordene primero por $x$ es lo que hace compatibles RS1 y RS2: el cuadrado que RS1 coloca primero es el mismo que RS2 lleva al cuadrante. RS3 se aplica solo si el cuadrado de mayor lado es único, porque la transposición puede cambiar cuál de los cuadrados iguales queda primero, y en ese caso no se demostró la compatibilidad.
+
+\textit{Cómo recuperar las soluciones eliminadas.} A la solución encontrada se le aplican los 4 reflejos (8 si $W = H$) y todas las permutaciones de los cuadrados de igual tamaño. Se obtienen hasta $4 \cdot \prod_k m_k!$ soluciones ($8 \cdot \prod_k m_k!$ si $W = H$), menos las copias que coincidan si la figura es simétrica. En el ejemplo: $4 \cdot 2! \cdot 3! = 48$.
+
+\subsubsection{Detalles de implementación}
+
+Los dominios ajustados de $x_i$ y $y_i$ se implementaron asignando a cada elemento del arreglo de variables su propio rango, $0..W - s_i$ o $0..H - s_i$. Así, R1 queda garantizada sin necesidad de restricciones. Se implementaron cinco variantes (parámetro \texttt{impl}), cada una con un solo elemento más que la anterior (Tabla~\ref{tab:rect-impl}).
+
+\begin{table}[htbp]
+    \caption{Implementaciones de las restricciones del rectángulo}
+    \label{tab:rect-impl}
+    \small
+    \begin{tabularx}{\textwidth}{@{}cLLL@{}}
+        \toprule
+        \texttt{impl} & Contenido & Ventajas & Desventajas \\
+        \midrule
+        1 & R2 con las disyunciones explícitas & Traducción directa de la definición & $n(n-1)/2$ disyunciones (1540 con 56 cuadrados); propaga poco mientras falten coordenadas por fijar \\
+        2 & R2 con \texttt{diffn} & Una sola restricción global; compila más rápido & En Gecode poda prácticamente lo mismo que las disyunciones en estas instancias \\
+        3 & \texttt{impl} 2 + RR1 y RR2 (\texttt{cumulative}) & Razona sobre cada eje por separado & Ninguna medible: el tiempo de compilación no cambia \\
+        4 & \texttt{impl} 3 + RR3 y RR4 (cobertura exacta) & Obliga a llenar cada columna y fila & $W + H$ restricciones lineales con $n$ variables booleanas cada una; compilación de 0,13~s a 0,39~s en el caso de $112 \times 112$ \\
+        5 & \texttt{impl} 4 + RS1, RS2 y RS3 & Elimina las soluciones simétricas & Puede entrar en conflicto con estrategias que no construyen la solución en el mismo orden (ver Análisis de resultados) \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+La salida del modelo imprime las coordenadas de cada cuadrado y, si $W \le 40$, un dibujo del rectángulo con una letra por cuadrado. Para el ejemplo del enunciado (la fila superior del dibujo corresponde a $y = 3$):
+
+\begin{verbatim}
+D E F C C
+A A A C C
+A A A B B
+A A A B B
+\end{verbatim}
+
+\subsubsection{Estrategias de búsqueda}
+
+Se definieron cuatro estrategias (parámetro \texttt{strategy}), descritas en la Tabla~\ref{tab:rect-estrategias}. Las estrategias 2 a 4 recorren los cuadrados de mayor a menor lado, porque los grandes son los más difíciles de ubicar y dejarlos para el final suele llevar a callejones sin salida.
+
+\begin{table}[htbp]
+    \caption{Estrategias de búsqueda del rectángulo}
+    \label{tab:rect-estrategias}
+    \small
+    \begin{tabularx}{\textwidth}{@{}cLllL@{}}
+        \toprule
+        \texttt{strategy} & Variables, en orden & Variable & Valor & Idea \\
+        \midrule
+        1 & $x_1, y_1, x_2, y_2, \dots$ (orden de los datos) & \texttt{input\_order} & \texttt{indomain\_min} & Ubicar los cuadrados uno a uno, cada uno lo más abajo y a la izquierda posible \\
+        2 & Todas las $x$ y luego todas las $y$ (\texttt{seq\_search}), de mayor a menor & \texttt{input\_order} & \texttt{indomain\_min} & Resolver primero el problema en el eje $x$, que se comporta como un problema de programación de tareas, y después el eje $y$ \\
+        3 & Igual que la 2 & \texttt{smallest} & \texttt{indomain\_min} & Elegir siempre el cuadrado que puede ubicarse más a la izquierda y ponerlo ahí: llenar el rectángulo de izquierda a derecha \\
+        4 & Todas las coordenadas, de mayor a menor & \texttt{dom\_w\_deg} & \texttt{indomain\_min} & Concentrarse en las variables cuyas restricciones han causado más fallos \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+La estrategia 3 corresponde al \texttt{seq\_search} con \texttt{smallest} que se usa en el problema de \textit{job shop}: en ambos casos el eje $x$ hace el papel del tiempo. Se esperaba que las estrategias 2 y 3 fueran efectivas solo en combinación con las restricciones redundantes. Si todas las $x$ se fijan antes que cualquier $y$, R2 no puede detectar una mala elección hasta que se fijan las $y$; solo RR1 y RR3 razonan sobre el eje $x$ por sí solo.
+
+\subsubsection{Pruebas}
+
+Se usaron 10 instancias, elegidas para cubrir los distintos aspectos del modelo (Tabla~\ref{tab:rect-instancias}).
+
+\begin{table}[htbp]
+    \caption{Instancias de prueba del rectángulo}
+    \label{tab:rect-instancias}
+    \small
+    \begin{tabularx}{\textwidth}{@{}lLlLL@{}}
+        \toprule
+        Instancia & Origen & Rectángulo & Cuadrados & Objetivo de la prueba \\
+        \midrule
+        \texttt{01} & Enunciado & $5 \times 4$ & 6 (3, 2, 2, 1, 1, 1) & Corrección y conteo de soluciones simétricas \\
+        \texttt{02} & Rectángulo perfecto de Moroń \parencite{wiki-perfect-rectangle} & $33 \times 32$ & 9, todos distintos & Instancia clásica sin tamaños repetidos \\
+        \texttt{03} & Rectángulo perfecto de orden 9 & $69 \times 61$ & 9, todos distintos & Dominios grandes \\
+        \texttt{04} & Cuadrado perfecto simple de Duijvestijn \parencite{duijvestijn1978} & $112 \times 112$ & 21, todos distintos & Instancia difícil conocida \\
+        \texttt{05}--\texttt{07} & Generadas al azar llenando el rectángulo & $10 \times 8$, $14 \times 11$, $20 \times 16$ & 22, 25, 56 & Muchos tamaños repetidos; escalabilidad \\
+        \texttt{08} & Los cuadrados de \texttt{06} en otro rectángulo & $22 \times 7$ & 25 & Instancia factible con muchas simetrías \\
+        \texttt{09}, \texttt{10} & Halladas mediante búsqueda aleatoria & $9 \times 7$, $10 \times 10$ & 14, 15 & Infactibles: las áreas coinciden, pero los cuadrados no caben \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Las pruebas de corrección fueron tres. Primero, el script independiente verificó las soluciones de las ocho instancias factibles. Segundo, al enumerar todas las soluciones del ejemplo, el modelo sin ruptura de simetrías encuentra 48, el número esperado, y con ruptura de simetrías encuentra 1. Tercero, la infactibilidad de \texttt{09} y \texttt{10} se confirmó con otro solver, Chuffed, usando solo \texttt{impl} 1 y 2. Como esas variantes no tienen restricciones redundantes ni de ruptura de simetrías, esto descarta que esas restricciones hayan eliminado soluciones.
+
+\subsubsection{Análisis de los árboles de búsqueda}
+
+Para el ejemplo del enunciado se recorrió el árbol completo con la estrategia 2, buscando todas las soluciones (Tabla~\ref{tab:rect-arbol}).
+
+\begin{table}[htbp]
+    \caption{Árbol completo del ejemplo del enunciado con la estrategia 2}
+    \label{tab:rect-arbol}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        \texttt{impl}                  & Nodos & Fallos & Profundidad máxima & Soluciones \\
+        \midrule
+        1 (disyunciones)               & 1687  & 796    & 11                 & 48         \\
+        2 (\texttt{diffn})             & 1663  & 784    & 11                 & 48         \\
+        3 (+ \texttt{cumulative})      & 195   & 50     & 9                  & 48         \\
+        4 (+ cobertura exacta)         & 95    & 0      & 6                  & 48         \\
+        5 (+ simetrías)                & 1     & 0      & 0                  & 1          \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% TODO Figura: captura de Gecode Gist del ejemplo, todas las soluciones, con impl 2 y con impl 4, strategy 2
+% TODO Figura: captura de Gecode Gist de la instancia infactible 09 con impl 5 y strategy 3
+
+Con \texttt{impl} 1 y 2, casi la mitad de los nodos del árbol son fallos: el solver ubica cuadrados en posiciones que solo se revelan imposibles varios niveles más abajo. \texttt{cumulative} reduce el árbol a 195 nodos y 50 fallos. Con la cobertura exacta el árbol no tiene ningún fallo: sus 95 nodos son 48 hojas, todas soluciones, y 47 nodos de decisión. Ninguna rama se desperdicia, y el tamaño restante del árbol se debe solo a las 48 soluciones simétricas. La ruptura de simetrías elimina también eso, y el árbol se reduce a la raíz.
+
+En las instancias más grandes se repite el mismo patrón. Para demostrar que \texttt{09} no tiene solución con la estrategia 2, el árbol tiene 12\,439 nodos y profundidad 20 con \texttt{impl} 3; 1149 nodos y profundidad 9 con \texttt{impl} 4; y 39 nodos y profundidad 5 con \texttt{impl} 5. En un árbol de demostración de infactibilidad todas las hojas son fallos, así que su tamaño mide directamente cuánto trabajo repite el solver. El cuadrado de $112 \times 112$ se resuelve con \texttt{impl} 4 y la estrategia 3 en un árbol de 316 nodos, 150 fallos y profundidad 24.
+
+\subsubsection{Análisis de resultados}
+
+\textbf{Efecto de cada elemento del modelo.} Con la estrategia 1 el orden de las decisiones es el mismo en todas las variantes, así que las diferencias se deben solo a la propagación. La Tabla~\ref{tab:rect-impl-nodos} muestra los nodos para encontrar la primera solución o, en \texttt{09} y \texttt{10} (U), para demostrar que no existe. La instancia \texttt{04} no aparece porque con la estrategia 1 ninguna variante la resuelve en 60~s.
+
+\begin{table}[htbp]
+    \caption{Nodos por implementación con la estrategia 1}
+    \label{tab:rect-impl-nodos}
+    \begin{tabular}{@{}lccccc@{}}
+        \toprule
+        Instancia        & \texttt{impl} 1 & \texttt{impl} 2 & \texttt{impl} 3 & \texttt{impl} 4 & \texttt{impl} 5 \\
+        \midrule
+        \texttt{01}      & 13              & 13              & 13              & 6               & 1               \\
+        \texttt{02}      & 1811            & 1811            & 12              & 6               & 5               \\
+        \texttt{03}      & 4907            & 4907            & 16              & 3               & 1               \\
+        \texttt{05}      & 326             & 326             & 182             & 30              & 23              \\
+        \texttt{06}      & 483             & 483             & 195             & 33              & 29              \\
+        \texttt{07}      & 1603            & 1603            & 1077            & 91              & 76              \\
+        \texttt{08}      & $>60$~s         & $>60$~s         & $>60$~s         & 886\,649        & 3437            \\
+        \texttt{09} (U)  & 3\,143\,871     & 3\,125\,747     & 260\,823        & 33\,839         & 203             \\
+        \texttt{10} (U)  & 2\,918\,615     & 2\,918\,615     & 190\,459        & 39\,139         & 661             \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Comparación de estrategias con el modelo completo (\texttt{impl} 5).} La Tabla~\ref{tab:rect-estrategias-nodos} muestra los nodos explorados por cada estrategia.
+
+\begin{table}[htbp]
+    \caption{Nodos por estrategia con el modelo completo (\texttt{impl} 5)}
+    \label{tab:rect-estrategias-nodos}
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        Instancia        & \texttt{strategy} 1 & \texttt{strategy} 2 & \texttt{strategy} 3 & \texttt{strategy} 4 \\
+        \midrule
+        \texttt{01}      & 1                   & 1                   & 1                   & 1                   \\
+        \texttt{02}      & 5                   & 3                   & 3                   & 34                  \\
+        \texttt{03}      & 1                   & 1                   & 1                   & 1                   \\
+        \texttt{04}      & $>60$~s             & $>60$~s             & 316                 & $>60$~s             \\
+        \texttt{05}      & 23                  & 15                  & 15                  & 24                  \\
+        \texttt{06}      & 29                  & 25                  & 26                  & 2542                \\
+        \texttt{07}      & 76                  & 62                  & 49                  & 2931                \\
+        \texttt{08}      & 3437                & 262                 & 209                 & $>60$~s             \\
+        \texttt{09} (U)  & 203                 & 39                  & 165                 & 355                 \\
+        \texttt{10} (U)  & 661                 & 77                  & 165                 & 37                  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+De las 200 corridas, 60 alcanzaron el límite de 60~s, y 47 de ellas usaban \texttt{impl} 1 o 2. De estos resultados se concluye lo siguiente:
+
+\begin{enumerate}
+    \item \textbf{\texttt{diffn} y las disyunciones podan prácticamente lo mismo en Gecode.} Con las estrategias 1 a 3 exploran casi los mismos nodos en todas las instancias. La ventaja de \texttt{diffn} es la compacidad: con 56 cuadrados (\texttt{07}), el modelo compila en 0,13~s en lugar de 0,30~s.
+    \item \textbf{\texttt{cumulative} (\texttt{impl} 2 a 3) produce la mayor mejora en las instancias factibles pequeñas y medianas.} El rectángulo de Moroń pasa de 1811 a 12 nodos y el de orden 9, de 4907 a 16. Además vuelve viables las estrategias 2 y 3. Con \texttt{impl} 1 y 2 estas estrategias alcanzan el límite en todas las instancias salvo el ejemplo; en el rectángulo de Moroń, después de 27 a 44 millones de nodos. Con \texttt{impl} 3 resuelven todas las instancias factibles, salvo \texttt{04}, y todas menos \texttt{08} en menos de 1100 nodos.
+    \item \textbf{La cobertura exacta (\texttt{impl} 3 a 4) es indispensable para la instancia más difícil.} Sin ella, ninguna estrategia resuelve el cuadrado de $112 \times 112$ en 60~s; con ella, la estrategia 3 lo resuelve en 316 nodos y 0,1~s. En \texttt{08}, la estrategia 1 pasa de alcanzar el límite a 886\,649 nodos.
+    \item \textbf{La ruptura de simetrías (\texttt{impl} 4 a 5) es decisiva cuando hay que recorrer todo el árbol.} Demostrar que \texttt{09} no tiene solución pasa de 33\,839 a 203 nodos con la estrategia 1, y de 180\,209 a 165 con la estrategia 3. En la instancia factible \texttt{08}, con muchos cuadrados repetidos, la primera solución con la estrategia 3 pasa de 138\,988 a 209 nodos.
+    \item \textbf{La mejor estrategia depende del objetivo.} Para encontrar una solución, la mejor es la 3: es la única que resuelve el cuadrado de $112 \times 112$. Para demostrar infactibilidad, la mejor es la 2 (39 y 77 nodos con \texttt{impl} 5), porque fijar primero los cuadrados grandes en un orden fijo provoca los fallos lo antes posible.
+    \item \textbf{La ruptura de simetrías debe ser compatible con la estrategia.} RS1 y RS2 conservan la solución con el cuadrado mayor abajo a la izquierda y los cuadrados iguales ordenados de izquierda a derecha. Las estrategias 2 y 3 construyen precisamente esa solución, porque ubican primero el cuadrado mayor lo más a la izquierda posible. \texttt{dom\_w\_deg} no sigue ese orden. Con ruptura de simetrías, \texttt{06} pasa de 32 a 2542 nodos con la estrategia 4, y \texttt{08} pasa de 1241 nodos a alcanzar el límite. Como en el Kakuro, con una heurística adaptativa más restricciones no garantizan un árbol más pequeño.
+\end{enumerate}
+
+Como referencia, Chuffed (un solver de generación perezosa de cláusulas) resuelve el cuadrado de $112 \times 112$ en 7,8~s con \texttt{impl} 3 y la estrategia 3, sin la cobertura exacta. Con las estrategias 2 y 4 alcanza el límite de 60~s.
+
+\subsubsection{Conclusiones del ejercicio}
+
+La combinación recomendada es \texttt{impl} 5 con \texttt{strategy} 3. Resuelve las 10 instancias con un máximo de 316 nodos y menos de 0,1~s de búsqueda en cada una; la única otra combinación que las resuelve todas, \texttt{impl} 4 con la misma estrategia, necesita hasta 314\,779 nodos. El rendimiento del modelo depende sobre todo de las restricciones redundantes: \texttt{cumulative} permite razonar sobre cada eje por separado, y la cobertura exacta convierte la condición \enquote{sin huecos} en propagación. La ruptura de simetrías es fundamental para demostrar infactibilidad. Por último, el modelo y la estrategia deben diseñarse juntos: la misma estrategia es la peor sin las restricciones redundantes y la mejor con ellas.

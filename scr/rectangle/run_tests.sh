@@ -1,27 +1,30 @@
 #!/usr/bin/env bash
-# Ejecuta un modelo con todas sus instancias y variantes, y guarda las
-# estadísticas de MiniZinc en un CSV con el mismo formato para todos los ejercicios.
+# Corre rectangulo.mzn sobre cada instancia de tests/ con todas las combinaciones
+# impl x strategy, y guarda las estadísticas de MiniZinc en results/rectangulo_<solver>.csv.
 #
-# Uso:   ./correr_pruebas.sh <modelo> "<impls>" "<estrategias>" [solver] [timeout_ms]
-# Ej.:   ./correr_pruebas.sh kakuro "1 2 3 4" "1 2 3" gecode 60000
-# Busca las instancias en datos/<modelo>_*.dzn y escribe resultados/<modelo>_<solver>.csv
+# Uso:  ./run_tests.sh [solver] [timeout_ms]     (por defecto: gecode 60000)
 #
 # Columnas: tiempo_compilacion_s = flatTime (MiniZinc -> FlatZinc),
 #           tiempo_s = solveTime (búsqueda), nodos, fallos, profundidad = peakDepth.
 # estado: sat = encontró solución, insat = probó que no hay, timeout = se acabó el tiempo.
 
 set -u
-MODELO=$1; IMPLS=$2; ESTRATEGIAS=$3; SOLVER=${4:-gecode}; TIMEOUT=${5:-60000}
-mkdir -p resultados
-CSV="resultados/${MODELO}_${SOLVER}.csv"
+cd "$(dirname "$0")"
+MODELO=rectangulo
+IMPLS="1 2 3 4 5"
+ESTRATEGIAS="1 2 3 4"
+SOLVER=${1:-gecode}; TIMEOUT=${2:-60000}
+mkdir -p results
+CSV="results/${MODELO}_${SOLVER}.csv"
 echo "instancia,impl,estrategia,solver,estado,tiempo_compilacion_s,tiempo_s,nodos,fallos,profundidad" > "$CSV"
 
-for dzn in datos/${MODELO}_*.dzn; do
+stat() { echo "$SALIDA" | grep -m1 "^%%%mzn-stat: $1=" | cut -d= -f2; }
+
+for dzn in tests/*.dzn; do
   for i in $IMPLS; do
     for s in $ESTRATEGIAS; do
       SALIDA=$(minizinc --solver "$SOLVER" -s --time-limit "$TIMEOUT" \
                "${MODELO}.mzn" "$dzn" -D "impl=$i;strategy=$s" 2>&1)
-      stat() { echo "$SALIDA" | grep -m1 "^%%%mzn-stat: $1=" | cut -d= -f2; }
       if   echo "$SALIDA" | grep -q "=====UNSATISFIABLE====="; then EST=insat
       elif echo "$SALIDA" | grep -q "^----------";              then EST=sat
       else EST=timeout; fi

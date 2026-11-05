@@ -69,6 +69,7 @@
   },
   "latex-workshop.synctex.afterBuild.enabled": true,
   "files.associations": {
-    ".chktexrc": "properties"
+    ".chktexrc": "properties",
+    ".latexmkrc": "perl"
   }
 }
