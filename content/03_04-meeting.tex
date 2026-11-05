@@ -2,26 +2,206 @@
 
 \subsubsection{Descripción del problema}
 
+El problema consiste en organizar un conjunto de personas en una fila para tomar una fotografía, teniendo en cuenta diferentes condiciones sobre las posiciones que deben ocupar. Algunas parejas deben permanecer juntas, otras deben estar separadas y ciertas personas deben mantener una distancia máxima entre sus posiciones.
+
+El objetivo es encontrar una asignación de posiciones que satisfaga simultáneamente todas las condiciones establecidas. Se trata de un problema de satisfacción de restricciones, por lo que no se busca optimizar una función objetivo, sino encontrar una configuración válida.
+
 \subsubsection{Modelo}
 
 \paragraph{Parámetros}
 
+El modelo utiliza los siguientes parámetros de entrada:
+
+\begin{itemize}
+    \item $personas$: arreglo de cadenas de caracteres que contiene los nombres de las personas que participarán en la fotografía.
+
+    \item $n$: número total de personas que deben ubicarse en la fila. Se define como la longitud del arreglo $personas$.
+
+    \item $next$: matriz de pares de índices que identifica las parejas de personas que deben ocupar posiciones consecutivas.
+
+    \item $separate$: matriz de pares de índices que identifica las parejas de personas que no pueden ocupar posiciones consecutivas.
+
+    \item $distance$: matriz de ternas $(a,b,M)$ que establece una distancia máxima entre las posiciones de dos personas. El parámetro $M$ representa el número máximo de personas que pueden quedar entre ellas.
+
+    \item $impl$: parámetro que determina la implementación utilizada para expresar la restricción de unicidad de posiciones:
+    \begin{itemize}
+        \item $1$: desigualdades explícitas entre pares de variables.
+        \item $2$: utilización del predicado global \texttt{alldifferent}.
+        \item $3$: utilización de \texttt{alldifferent} junto con una restricción de ruptura de simetría.
+    \end{itemize}
+
+    \item $strategy$: parámetro que determina la estrategia de búsqueda empleada:
+    \begin{itemize}
+        \item $1$: orden de entrada (\texttt{input\_order}).
+        \item $2$: selección de la variable con el dominio más pequeño (\texttt{first\_fail}).
+        \item $3$: selección de la variable cuyo menor valor actual es más pequeño (\texttt{smallest}).
+    \end{itemize}
+\end{itemize}
+
 \paragraph{Variables y dominios}
+
+Se define una variable de decisión entera $pos_i$ para cada persona $i$, que representa la posición que ocupará dentro de la fila. Su dominio está dado por:
+
+\[
+pos_i \in \{1,2,\ldots,n\},
+\quad \forall i \in \{1,\ldots,n\}
+\]
+
+El conjunto de variables de decisión corresponde a:
+
+\[
+pos = (pos_1,pos_2,\ldots,pos_n)
+\]
+
+Cada variable representa una posición dentro de la fila. Además, todas las personas deben ocupar posiciones diferentes, garantizando que no existan dos personas ubicadas en el mismo lugar.
 
 \paragraph{Restricciones}
 
+El modelo incorpora las siguientes restricciones:
+
+\begin{itemize}
+    \item \textbf{Unicidad de posiciones:} cada persona debe ocupar una posición diferente dentro de la fila.
+
+    \[
+    pos_i \neq pos_j,
+    \quad \forall i,j \in \{1,\ldots,n\},\ i<j
+    \]
+
+    Esta condición se implementa mediante desigualdades explícitas entre pares de variables o mediante el predicado global \texttt{alldifferent}, dependiendo de la implementación seleccionada.
+
+    \item \textbf{Personas consecutivas:} para cada pareja $(a,b)$ perteneciente a $next$, sus posiciones deben diferir exactamente en una unidad.
+
+    \[
+    |pos_a-pos_b|=1
+    \]
+
+    \item \textbf{Personas separadas:} para cada pareja $(a,b)$ perteneciente a $separate$, sus posiciones deben diferir en más de una unidad, garantizando que exista al menos una persona entre ellas.
+
+    \[
+    |pos_a-pos_b|>1
+    \]
+
+    \item \textbf{Distancia máxima:} para cada terna $(a,b,M)$ perteneciente a $distance$, la diferencia entre las posiciones de ambas personas no puede superar $M+1$.
+
+    \[
+    |pos_a-pos_b|\leq M+1
+    \]
+
+    Esta condición garantiza que como máximo $M$ personas queden ubicadas entre las dos personas indicadas.
+\end{itemize}
+
 \paragraph{Restricciones redundantes}
+
+El modelo no incorpora restricciones redundantes adicionales. Se utilizan únicamente las condiciones necesarias para representar las reglas del problema, junto con las restricciones de unicidad de posiciones.
 
 \paragraph{Ruptura de simetrías}
 
+En la tercera implementación se incorpora la siguiente restricción:
+
+\[
+pos_1 \leq pos_n
+\]
+
+Esta condición permite eliminar soluciones simétricas producidas por la reflexión de la fila. Debido a que las restricciones de consecutividad, separación y distancia máxima dependen de diferencias absolutas entre posiciones, invertir el orden de la fila conserva la validez de una solución.
+
+Por tanto, se establece una orientación específica para evitar explorar ambas configuraciones equivalentes. Es importante aclarar que esta condición no modifica las reglas originales del problema, sino que reduce el espacio de búsqueda al seleccionar una representación entre soluciones simétricas.
+
 \subsubsection{Detalles de implementación}
+
+Se desarrollaron tres implementaciones del modelo para comparar diferentes formas de expresar la unicidad de las posiciones:
+
+\begin{itemize}
+    \item \textbf{Implementación 1:} utiliza restricciones de desigualdad entre todos los pares de variables, verificando que ninguna persona comparta posición con otra.
+
+    \item \textbf{Implementación 2:} utiliza el predicado global \texttt{alldifferent}, que establece directamente que todas las variables deben tomar valores diferentes.
+
+    \item \textbf{Implementación 3:} utiliza \texttt{alldifferent} y agrega una restricción de ruptura de simetría mediante $pos_1 \leq pos_n$.
+\end{itemize}
+
+Las tres implementaciones conservan las mismas restricciones principales del problema. La diferencia se encuentra en la forma de expresar la unicidad y en la incorporación de la ruptura de simetría en la tercera implementación.
 
 \subsubsection{Estrategias de búsqueda}
 
+Para evaluar el comportamiento del solucionador Gecode se utilizaron tres estrategias de búsqueda:
+
+\begin{itemize}
+    \item \textbf{Estrategia 1 -- Input Order:} selecciona las variables siguiendo el orden en que fueron declaradas en el modelo. Los valores se prueban de menor a mayor mediante \texttt{indomain\_min}.
+
+    \item \textbf{Estrategia 2 -- First Fail:} selecciona la variable que tiene actualmente el dominio más pequeño. Esta estrategia busca detectar contradicciones lo antes posible. Los valores se prueban de menor a mayor.
+
+    \item \textbf{Estrategia 3 -- Smallest:} selecciona la variable cuyo menor valor disponible es el más pequeño. Al igual que las anteriores, utiliza \texttt{indomain\_min} para asignar valores.
+\end{itemize}
+
+La combinación de las tres implementaciones con las tres estrategias permite evaluar nueve configuraciones diferentes para cada instancia.
+
 \subsubsection{Pruebas}
+
+Se realizaron pruebas con diez instancias diferentes, combinando cada una de las tres implementaciones con las tres estrategias de búsqueda, obteniendo un total de 90 ejecuciones.
+
+La siguiente tabla presenta el estado de cada instancia y los rangos de nodos, fallos y profundidad registrados entre sus nueve configuraciones.
+
+\begin{center}
+\small
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Instancia} & \textbf{Estado} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Profundidad} \\
+\hline
+reunion\_01 & SAT & 9--11 & 1--2 & 7--8 \\
+reunion\_02 & SAT & 3 & 0 & 2 \\
+reunion\_03 & SAT & 8--41 & 1--17 & 6--11 \\
+reunion\_04 & SAT & 5--12 & 1--4 & 3--4 \\
+reunion\_05 & SAT & 4--17 & 0--6 & 3--5 \\
+reunion\_06 & SAT & 5--9 & 0--1 & 4--7 \\
+reunion\_07 & INSAT & 9--51 & 5--26 & 1--8 \\
+reunion\_08 & SAT & 5--11 & 0--3 & 4--7 \\
+reunion\_09 & SAT & 7--50 & 0--21 & 6--11 \\
+reunion\_10 & SAT & 8--33 & 1--13 & 6--9 \\
+\hline
+\end{tabular}
+\end{center}
+
+Se observa que nueve de las diez instancias son satisfacibles, mientras que la instancia \texttt{reunion\_07} no presenta ninguna solución válida.
 
 \subsubsection{Análisis de los árboles de búsqueda}
 
+Los resultados muestran diferencias en el tamaño de los árboles de búsqueda dependiendo de la instancia, la implementación y la estrategia seleccionada.
+
+En la instancia \texttt{reunion\_02}, todas las configuraciones obtuvieron exactamente 3 nodos, 0 fallos y una profundidad de 2. Esto indica que el problema es sencillo de resolver y que las variaciones entre implementaciones y estrategias no generan diferencias en este caso.
+
+En la instancia \texttt{reunion\_03} se presentaron diferencias importantes. La primera implementación con la estrategia \texttt{input\_order} registró 41 nodos y 17 fallos, mientras que las implementaciones segunda y tercera con \texttt{smallest} registraron únicamente 8 nodos y 1 fallo. Esto evidencia que la selección de variables puede influir considerablemente en el proceso de búsqueda.
+
+En la instancia \texttt{reunion\_07}, todas las configuraciones determinaron que el problema era insatisfacible. Sin embargo, se observaron diferencias en el esfuerzo de búsqueda. La primera implementación con \texttt{smallest} alcanzó 51 nodos y 26 fallos, mientras que la tercera implementación con \texttt{input\_order} y \texttt{first\_fail} registró 9 nodos y 5 fallos.
+
+En la instancia \texttt{reunion\_09}, la estrategia \texttt{first\_fail} presentó el mayor esfuerzo de búsqueda, con 50 nodos y 21 fallos en las tres implementaciones. En cambio, las estrategias \texttt{input\_order} y \texttt{smallest} registraron 7 nodos y ningún fallo.
+
+También se observa que la estrategia \texttt{first\_fail} no necesariamente obtiene mejores resultados. Aunque busca seleccionar variables con dominios reducidos, su comportamiento depende de la estructura y las restricciones particulares de cada instancia.
+
 \subsubsection{Análisis de resultados}
 
+A partir de las pruebas realizadas se pueden identificar los siguientes aspectos:
+
+\begin{itemize}
+    \item \textbf{Implementaciones:} el uso de \texttt{alldifferent} permite expresar la unicidad de las posiciones de manera más compacta que las desigualdades explícitas. Sin embargo, los resultados no muestran que una implementación sea siempre superior a las demás.
+
+    \item \textbf{Estrategias de búsqueda:} el rendimiento depende de la instancia. La estrategia \texttt{smallest} obtuvo buenos resultados en algunos casos, mientras que \texttt{first\_fail} presentó un mayor número de nodos en otras instancias.
+
+    \item \textbf{Ruptura de simetría:} la tercera implementación permite eliminar configuraciones equivalentes por reflexión. No obstante, su efecto sobre el número de nodos y fallos varía según la instancia y la estrategia utilizada.
+
+    \item \textbf{Tiempos de ejecución:} los tiempos de búsqueda registrados fueron muy pequeños, aproximadamente entre 0.0001 y 0.0009 segundos. Por esta razón, no es conveniente establecer conclusiones generales de rendimiento basándose únicamente en estas diferencias. El tiempo de compilación fue considerablemente mayor que el tiempo de búsqueda.
+\end{itemize}
+
+Un caso importante es la instancia \texttt{reunion\_07}, cuya insatisfacibilidad puede demostrarse directamente a partir de sus restricciones.
+
+En esta instancia, Andrés, Felipe y Santiago deben ocupar posiciones consecutivas, ya que Andrés debe estar junto a Felipe y Felipe junto a Santiago. Por tanto, las tres personas forman necesariamente un bloque de tres posiciones consecutivas.
+
+Como existen cinco personas en total, las dos posiciones restantes también deben ser consecutivas, independientemente de dónde se ubique el bloque. Estas posiciones deben ser ocupadas por Camilo y Valeria.
+
+Sin embargo, la restricción de separación establece que Camilo y Valeria no pueden ocupar posiciones consecutivas. Esto genera una contradicción, por lo que la instancia no tiene solución.
+
 \subsubsection{Conclusiones del ejercicio}
+
+El desarrollo del modelo permitió representar las condiciones de organización de una fila mediante restricciones matemáticas y variables de decisión enteras.
+
+Las pruebas demostraron que el comportamiento del solucionador depende tanto de la implementación de las restricciones como de la estrategia de búsqueda seleccionada. No existe una configuración que obtenga siempre los mejores resultados para todas las instancias.
+
+El uso de \texttt{alldifferent} facilita la representación de la unicidad de posiciones, mientras que la ruptura de simetría permite reducir configuraciones equivalentes. Finalmente, el análisis de la instancia \texttt{reunion\_07} permitió comprobar que algunas combinaciones de restricciones pueden generar contradicciones que hacen imposible encontrar una solución.

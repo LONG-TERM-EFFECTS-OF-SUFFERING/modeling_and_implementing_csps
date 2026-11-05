@@ -2,26 +2,322 @@
 
 \subsubsection{Descripción del problema}
 
+El problema consiste en determinar el apellido, la edad y el género musical preferido de tres personas: Juan, Darío y Óscar. Los apellidos posibles son López, Gonzales y García; las edades son 24, 25 y 26 años; y los géneros musicales son Clásica, Pop y Jazz.
+
+El objetivo es encontrar una asignación que cumpla todas las pistas del acertijo, garantizando que cada persona tenga una edad, un apellido y un género musical diferente.
+
 \subsubsection{Modelo}
 
 \paragraph{Parámetros}
 
+Se definen los siguientes conjuntos enumerados:
+
+\begin{itemize}
+    \item Personas:
+    \[
+    Nombres = \{Juan, Dario, Oscar\}
+    \]
+    \item Apellidos:
+    \[
+    Apellidos = \{Lopez, Gonzales, Garcia\}
+    \]
+    \item Géneros musicales:
+    \[
+    TipoMusica = \{Clasica, Pop, Jazz\}
+    \]
+\end{itemize}
+
+El dominio de edades se define como:
+
+\[
+Edades = \{24,25,26\}
+\]
+
 \paragraph{Variables y dominios}
+
+Se definen tres arreglos de variables de decisión:
+
+\begin{itemize}
+    \item Edad:
+    \[
+    edad[i] \in \{24,25,26\}
+    \quad \forall i \in Nombres
+    \]
+
+    \item Apellido:
+    \[
+    apellido[i] \in Apellidos
+    \quad \forall i \in Nombres
+    \]
+
+    \item Música:
+    \[
+    musica[i] \in TipoMusica
+    \quad \forall i \in Nombres
+    \]
+\end{itemize}
+
+En total, el modelo contiene nueve variables de decisión, tres por cada característica.
 
 \paragraph{Restricciones}
 
+Las restricciones del problema se dividen en condiciones de unicidad y pistas específicas.
+
+\textbf{1. Unicidad de valores}
+
+Cada persona debe tener una edad, un apellido y un género musical diferentes. Se expresa mediante:
+
+\[
+\forall i,j \in Nombres,\ i \neq j:
+\]
+
+\[
+edad[i] \neq edad[j]
+\]
+
+\[
+apellido[i] \neq apellido[j]
+\]
+
+\[
+musica[i] \neq musica[j]
+\]
+
+Estas condiciones se implementan mediante desigualdades explícitas o utilizando la restricción global \texttt{alldifferent}, según la implementación seleccionada.
+
+\textbf{2. Apellido Gonzales}
+
+La persona con apellido Gonzales debe ser menor que Juan y preferir música clásica:
+
+\[
+apellido[j] = Gonzales
+\Rightarrow
+\left(
+edad[Juan] > edad[j]
+\land
+musica[j] = Clasica
+\right)
+\]
+
+\textbf{3. Música Pop}
+
+Quien prefiera música Pop no puede tener el apellido García ni tener 24 años:
+
+\[
+musica[i] = Pop
+\Rightarrow
+\left(
+apellido[i] \neq Garcia
+\land
+edad[i] \neq 24
+\right)
+\]
+
+\textbf{4. Condiciones de Óscar}
+
+Óscar no tiene el apellido López y tiene 25 años:
+
+\[
+apellido[Oscar] \neq Lopez
+\]
+
+\[
+edad[Oscar] = 25
+\]
+
+\textbf{5. Condición de Darío}
+
+Darío no prefiere música Jazz:
+
+\[
+musica[Dario] \neq Jazz
+\]
+
 \paragraph{Restricciones redundantes}
+
+La tercera implementación incorpora dos restricciones redundantes que se deducen de las pistas originales:
+
+\[
+edad[Juan] \neq 24
+\]
+
+\[
+musica[Juan] \neq Clasica
+\]
+
+La primera se deduce porque Óscar tiene 25 años y todas las edades deben ser diferentes. Además, la persona Gonzales debe ser menor que Juan. Por lo tanto, Juan no puede tener 24 años y necesariamente debe tener 26.
+
+La segunda se obtiene porque Juan no puede tener el apellido Gonzales: esto implicaría que su edad fuera mayor que sí misma. Como la persona Gonzales prefiere música clásica y los géneros deben ser diferentes, Juan tampoco puede preferirla.
+
+Estas restricciones no modifican las soluciones posibles, sino que ayudan al solver a deducir información anticipadamente.
 
 \paragraph{Ruptura de simetrías}
 
+No se implementan restricciones adicionales de ruptura de simetrías. Las personas tienen identidades específicas y algunas pistas hacen referencia directamente a Juan, Darío y Óscar, lo que permite diferenciarlas dentro del modelo.
+
 \subsubsection{Detalles de implementación}
+
+El modelo se desarrolló en MiniZinc utilizando conjuntos enumerados y arreglos de variables indexados por el conjunto \texttt{Nombres}.
+
+Se definieron dos parámetros para controlar las pruebas:
+
+\begin{itemize}
+    \item \texttt{impl}: selecciona la implementación de las restricciones de unicidad.
+    \item \texttt{strategy}: selecciona la estrategia de búsqueda.
+\end{itemize}
+
+Se implementaron tres versiones:
+
+\begin{itemize}
+    \item \textbf{Implementación 1:} utiliza desigualdades explícitas entre cada par de personas.
+    \item \textbf{Implementación 2:} utiliza la restricción global \texttt{alldifferent} para edades, apellidos y música.
+    \item \textbf{Implementación 3:} utiliza \texttt{alldifferent} y agrega las dos restricciones redundantes.
+\end{itemize}
+
+También se construye el arreglo \texttt{vars\_busqueda}, que contiene las nueve variables en el siguiente orden: primero las edades, luego los apellidos y finalmente los géneros musicales.
+
+El modelo utiliza \texttt{solve satisfy}, debido a que el objetivo es encontrar una asignación que cumpla todas las restricciones, sin optimizar una función objetivo.
 
 \subsubsection{Estrategias de búsqueda}
 
+Se implementaron tres estrategias de búsqueda. Todas utilizan \texttt{indomain\_min}, que intenta asignar primero el menor valor disponible del dominio.
+
+\begin{itemize}
+    \item \textbf{Estrategia 1: input\_order.} Selecciona las variables siguiendo el orden en que aparecen en \texttt{vars\_busqueda}.
+
+    \item \textbf{Estrategia 2: first\_fail.} Selecciona primero la variable que tenga el dominio actual más pequeño, buscando detectar contradicciones anticipadamente.
+
+    \item \textbf{Estrategia 3: smallest.} Selecciona la variable cuyo menor valor disponible sea el más pequeño.
+\end{itemize}
+
+La siguiente tabla resume las estrategias:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Estrategia} & \textbf{Selección de variable} & \textbf{Asignación de valor} \\
+\hline
+1 & input\_order & indomain\_min \\
+\hline
+2 & first\_fail & indomain\_min \\
+\hline
+3 & smallest & indomain\_min \\
+\hline
+\end{tabular}
+\caption{Estrategias de búsqueda implementadas.}
+\end{table}
+
 \subsubsection{Pruebas}
+
+Las pruebas se realizaron utilizando la instancia \texttt{acertijo\_01} y el solver Gecode, combinando las tres implementaciones con las tres estrategias de búsqueda.
+
+La configuración utilizada fue:
+
+\begin{itemize}
+    \item \textbf{Solver:} Gecode 6.3.0.
+    \item \textbf{MiniZinc:} versión 2.9.3.
+    \item \textbf{Tiempo máximo:} 60 segundos.
+    \item \textbf{Instancias:} acertijo\_01.
+    \item \textbf{Implementaciones y estrategias:} tres de cada una.
+\end{itemize}
+
+Se utilizó la opción \texttt{-s} de MiniZinc para obtener estadísticas de resolución, incluyendo tiempo, nodos, fallos y profundidad máxima.
+
+Los resultados fueron:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\textbf{Impl.} & \textbf{Estrategia} & \textbf{Estado} & \textbf{Tiempo (s)} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Prof.} \\
+\hline
+1 & 1 & sat & 0.0001276 & 3 & 1 & 1 \\
+\hline
+1 & 2 & sat & 0.0001284 & 3 & 1 & 1 \\
+\hline
+1 & 3 & sat & 0.0001315 & 5 & 1 & 3 \\
+\hline
+2 & 1 & sat & 0.0001322 & 3 & 1 & 1 \\
+\hline
+2 & 2 & sat & 0.0001418 & 3 & 1 & 1 \\
+\hline
+2 & 3 & sat & 0.0001370 & 5 & 1 & 3 \\
+\hline
+3 & 1 & sat & 0.0000979 & 1 & 0 & 0 \\
+\hline
+3 & 2 & sat & 0.0000953 & 1 & 0 & 0 \\
+\hline
+3 & 3 & sat & 0.0001555 & 1 & 0 & 0 \\
+\hline
+\end{tabular}
+\caption{Resultados de las pruebas con Gecode.}
+\end{table}
+
+Todas las ejecuciones finalizaron con estado \texttt{sat}, indicando que se encontró una solución válida. No se utilizó la opción \texttt{-a}, por lo que no se enumeraron todas las soluciones posibles.
 
 \subsubsection{Análisis de los árboles de búsqueda}
 
+En las implementaciones 1 y 2 se obtuvieron los mismos resultados en cuanto a nodos, fallos y profundidad:
+
+\begin{itemize}
+    \item Estrategias 1 y 2: 3 nodos, 1 fallo y profundidad 1.
+    \item Estrategia 3: 5 nodos, 1 fallo y profundidad 3.
+\end{itemize}
+
+Por otra parte, la implementación 3 obtuvo 1 nodo, 0 fallos y profundidad 0 en las tres estrategias.
+
+Esto muestra que las restricciones redundantes facilitaron la propagación, permitiendo encontrar una solución sin necesidad de realizar ramificaciones registradas en las estadísticas.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Implementación} & \textbf{Estrategia} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Profundidad} \\
+\hline
+1 & 1 & 3 & 1 & 1 \\
+\hline
+1 & 2 & 3 & 1 & 1 \\
+\hline
+1 & 3 & 5 & 1 & 3 \\
+\hline
+2 & 1 & 3 & 1 & 1 \\
+\hline
+2 & 2 & 3 & 1 & 1 \\
+\hline
+2 & 3 & 5 & 1 & 3 \\
+\hline
+3 & 1 & 1 & 0 & 0 \\
+\hline
+3 & 2 & 1 & 0 & 0 \\
+\hline
+3 & 3 & 1 & 0 & 0 \\
+\hline
+\end{tabular}
+\caption{Estadísticas de los árboles de búsqueda.}
+\end{table}
+
+Estos resultados corresponden a búsquedas detenidas al encontrar una solución, por lo que no representan necesariamente el árbol completo.
+
 \subsubsection{Análisis de resultados}
 
+Las implementaciones 1 y 2 presentaron estadísticas de búsqueda idénticas. Esto indica que, para esta instancia, utilizar \texttt{alldifferent} en lugar de desigualdades explícitas no produjo una mejora observable en la cantidad de nodos ni en los fallos.
+
+En cambio, la implementación 3 obtuvo mejores resultados en estos indicadores. Al agregar las restricciones redundantes, el solver pudo deducir anticipadamente información de las pistas originales, reduciendo los nodos de 3 o 5 a solamente 1 y eliminando los fallos registrados.
+
+En cuanto al tiempo de búsqueda, el menor valor fue de 0.0000953 segundos, correspondiente a la implementación 3 con la estrategia 2. El mayor fue de 0.0001555 segundos, correspondiente a la implementación 3 con la estrategia 3.
+
+Los tiempos son extremadamente pequeños, por lo que sus diferencias deben interpretarse con precaución. Además, el tiempo de compilación estuvo entre 0.176 y 0.189 segundos, considerablemente por encima del tiempo de búsqueda.
+
+Finalmente, dado que solo se evaluó una instancia, no es posible generalizar estos resultados a todos los problemas de acertijos lógicos.
+
 \subsubsection{Conclusiones del ejercicio}
+
+El ejercicio permitió modelar un acertijo lógico mediante variables, dominios y restricciones, utilizando MiniZinc y el solver Gecode.
+
+La comparación mostró que las implementaciones con desigualdades explícitas y \texttt{alldifferent} tuvieron un comportamiento equivalente en las pruebas realizadas. Sin embargo, agregar restricciones redundantes permitió reducir considerablemente los nodos explorados y eliminar los fallos registrados.
+
+También se observó que las estrategias de búsqueda pueden influir en el proceso de resolución, aunque su efecto fue menos relevante en la tercera implementación.
+
+En conclusión, el ejercicio demuestra que incorporar consecuencias lógicas de las restricciones originales puede mejorar la propagación y reducir el esfuerzo de búsqueda. No obstante, los resultados deben considerarse dentro del contexto de la única instancia evaluada.
