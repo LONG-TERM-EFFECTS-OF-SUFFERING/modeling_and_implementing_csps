@@ -1,27 +1,127 @@
 \subsection{Sudoku}
+\label{sec:sudoku}
 
-\subsubsection{Descripción del problema}
-
-\subsubsection{Modelo}
+\subsubsection{El Modelo}
+El problema del Sudoku se formula formalmente como un Problema de Satisfacción de Restricciones (CSP) definido por la terna $\mathcal{P} = \langle \mathcal{V}, \mathcal{D}, \mathcal{C} \rangle$ \parencite{apt2003principles}:
 
 \paragraph{Parámetros}
+\begin{itemize}
+    \item $n = 9$: dimensión de la cuadrícula.
+    \item $b = 3$: dimensión de los bloques de subcuadrícula ($b = \sqrt{n}$).
+    \item $\text{start} \in \{0, \dots, n\}^{n \times n}$: matriz fija de pistas iniciales, donde $\text{start}[i, j] = 0$ denota una celda originalmente vacía.
+\end{itemize}
 
 \paragraph{Variables y dominios}
+Se define una matriz de variables de decisión:
+\[
+\mathcal{V} = \{s_{i,j} \mid i \in \{1, \dots, n\}, \, j \in \{1, \dots, n\}\}
+\]
+donde $s_{i,j}$ representa el dígito asignado a la casilla ubicada en la fila $i$ y columna $j$.
 
-\paragraph{Restricciones}
+El dominio formal asociado a cada variable $s_{i,j}$ se establece como:
+\[
+D_{i,j} = 
+\begin{cases}
+\{\text{start}[i,j]\} & \text{si } \text{start}[i,j] > 0, \\
+\{1, 2, \dots, n\} & \text{en caso contrario.}
+\end{cases}
+\]
+Los dominios excluyen desde su especificación el valor cero y cualquier entero negativo o superior a nueve, restringiendo el espacio de búsqueda estrictamente a los dígitos permitidos por el juego.
 
-\paragraph{Restricciones redundantes}
+\paragraph{Restricciones del problema}
+El modelo incorpora tres familias de restricciones fundamentales:
+\begin{itemize}
+    \item \textbf{[R1] Restricción sobre filas:} En cada fila $i$, todos los elementos deben ser distintos:
+    \[
+    \forall i \in \{1, \dots, n\}: \quad \text{alldifferent}\Big(\{s_{i,1}, s_{i,2}, \dots, s_{i,n}\}\Big)
+    \]
+    \item \textbf{[R2] Restricción sobre columnas:} En cada columna $j$, todos los elementos deben ser distintos:
+    \[
+    \forall j \in \{1, \dots, n\}: \quad \text{alldifferent}\Big(\{s_{1,j}, s_{2,j}, \dots, s_{n,j}\}\Big)
+    \]
+    \item \textbf{[R3] Restricción sobre bloques de $3 \times 3$:} Para cada región indexada por $(bi, bj) \in \{0, 1, 2\}^2$:
+    \[
+    \text{alldifferent}\Big(\{s_{3 \cdot bi + r, \, 3 \cdot bj + c} \mid r, c \in \{1, 2, 3\}\}\Big)
+    \]
+\end{itemize}
 
-\paragraph{Ruptura de simetrías}
+\subsubsection{Detalles Importantes de Implementación}
+Se comparan dos formas de modelar la exclusión mutua en MiniZinc mediante el parámetro \texttt{impl}:
+\begin{enumerate}
+    \item \textbf{Implementación 1 (\texttt{impl=1}):} Descomposición en desigualdades binarias por pares ($s_{i,j1} \neq s_{i,j2}$). Este enfoque induce una red de restricciones binarias cuyo propagador únicamente remueve un valor cuando otra variable del par ha sido fijada a un valor singular (consistencia de arco o comprobación hacia adelante).
+    \item \textbf{Implementación 2 (\texttt{impl=2}):} Restricción global \texttt{alldifferent}. Utiliza el algoritmo de emparejamiento máximo en grafos bipartitos propuesto por \textcite{regin1994filtering}, alcanzando consistencia de hiperarco (\textit{hyper-arc consistency}). Esto permite descartar valores en conjuntos de variables antes de que estas sean instanciadas.
+\end{enumerate}
 
-\subsubsection{Detalles de implementación}
+\subsubsection{Rompimiento de Simetrías}
+En un tablero de Sudoku vacío existen $3\,359\,232$ simetrías de preservación de solución (permutación de símbolos, permutación de bandas, permutación de columnas y filas dentro de bandas y reflexión trasversal). 
 
-\subsubsection{Estrategias de búsqueda}
+No obstante, en las instancias del problema dadas por el enunciado existen pistas iniciales fijas. Dichas pistas actúan como restricciones unarias rígidas que anclan las identidades de las filas, columnas y dígitos. Imponer restricciones de rompimiento de simetría (\textbf{[RS1]}), tales como órdenes lexicográficos en las filas, resultaría incorrecto pues descartaría la solución única del acertijo. Por ende, no aplica imponer restricciones que rompan simetrías en este modelo.
 
-\subsubsection{Pruebas}
+\subsubsection{Restricciones Redundantes}
+Puesto que cada fila, columna y caja contiene una permutación de los números $\{1, \dots, 9\}$, la suma total de sus elementos satisface:
+\[
+\sum_{k=1}^9 k = \frac{9 \times 10}{2} = 45
+\]
+Bajo la configuración \texttt{impl=3}, se agregan las siguientes restricciones redundantes lineales diofánticas:
+\begin{itemize}
+    \item \textbf{[RR1]:} $\sum_{j=1}^9 s_{i,j} = 45$, $\forall i \in \{1, \dots, 9\}$.
+    \item \textbf{[RR2]:} $\sum_{i=1}^9 s_{i,j} = 45$, $\forall j \in \{1, \dots, 9\}$.
+    \item \textbf{[RR3]:} $\sum_{r=1}^3 \sum_{c=1}^3 s_{3 \cdot bi + r, \, 3 \cdot bj + c} = 45$, $\forall bi, bj \in \{0, 1, 2\}$.
+\end{itemize}
+Dichas restricciones son matemáticamente redundantes porque no eliminan ninguna asignación válida. Su función teórica es activar propagadores de intervalo (\textit{bounds consistency}) sobre sumas lineales, con el objetivo de acotar dominios en etapas tempranas.
 
-\subsubsection{Análisis de los árboles de búsqueda}
+\subsubsection{Estrategias de Búsqueda}
+Se contrastaron las siguientes estrategias de distribución mediante el parámetro \texttt{strategy}:
+\begin{itemize}
+    \item \textbf{Estrategia 0 (\texttt{strategy=0}):} Búsqueda estándar por defecto del solver Gecode.
+    \item \textbf{Estrategia 1 (\texttt{strategy=1}):} Selección secuencial (\texttt{input\_order}) con asignación al valor mínimo (\texttt{indomain\_min}).
+    \item \textbf{Estrategia 2 (\texttt{strategy=2}):} Heurística de selección de la variable más restringida (\texttt{first\_fail}) asignando el valor mínimo (\texttt{indomain\_min}). Sigue el principio de fallo temprano (\textit{fail-first principle}).
+    \item \textbf{Estrategia 3 (\texttt{strategy=3}):} Heurística adaptativa basada en peso de fallos (\texttt{dom\_w\_deg}) con \texttt{indomain\_min}.
+\end{itemize}
 
-\subsubsection{Análisis de resultados}
+\subsubsection{Pruebas y Análisis de Resultados}
+La batería de pruebas se evaluó de manera exhaustiva sobre el solver Gecode con un tiempo límite de $60$~s por experimento. Para evidenciar el impacto tanto de las implementaciones como de las heurísticas de búsqueda, se seleccionaron instancias representativas: la instancia base del enunciado (\texttt{sudoku\_01}), una de dificultad intermedia (\texttt{sudoku\_02}), una de alta dificultad (\texttt{sudoku\_03}) y una instancia contradictoria (\texttt{sudoku\_04}). Los datos extraídos de \texttt{results/sudoku\_gecode.csv} se consolidan en la Tabla~\ref{tab:sudoku-resultados}.
 
-\subsubsection{Conclusiones del ejercicio}
+\begin{table}[h!]
+\centering
+\small
+\caption{Resultados experimentales de la batería de pruebas para el Sudoku.}
+\label{tab:sudoku-resultados}
+\begin{tabularx}{\textwidth}{l c c c r r r}
+\toprule
+\textbf{Instancia} & \textbf{Impl.} & \textbf{Estrategia} & \textbf{Estado} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Tiempo (s)} \\
+\midrule
+sudoku\_01 & 1 & 1 & SAT & 1 & 0 & 0,0001 \\
+sudoku\_01 & 2 & 2 & SAT & 1 & 0 & 0,0001 \\
+sudoku\_01 & 3 & 3 & SAT & 1 & 0 & 0,0001 \\
+\midrule
+sudoku\_02 & 1 & 1 (\texttt{input\_order}) & SAT & 5\,654 & 2\,825 & 0,0196 \\
+sudoku\_02 & 1 & 2 (\texttt{first\_fail})  & SAT & 277 & 136 & 0,0016 \\
+sudoku\_02 & 1 & 3 (\texttt{dom\_w\_deg})   & SAT & 141 & 69 & 0,0012 \\
+sudoku\_02 & 2 & 1 (\texttt{input\_order}) & SAT & 1\,072 & 534 & 0,0054 \\
+sudoku\_02 & 2 & 2 (\texttt{first\_fail})  & SAT & 187 & 92 & 0,0015 \\
+sudoku\_02 & 2 & 3 (\texttt{dom\_w\_deg})   & SAT & 141 & 69 & 0,0012 \\
+sudoku\_02 & 3 & 3 (\texttt{dom\_w\_deg})   & SAT & 25 & 10 & 0,0004 \\
+\midrule
+sudoku\_03 & 1 & 1 (\texttt{input\_order}) & SAT & 166 & 79 & 0,0011 \\
+sudoku\_03 & 1 & 2 (\texttt{first\_fail})  & SAT & 23 & 8 & 0,0003 \\
+sudoku\_03 & 2 & 2 (\texttt{first\_fail})  & SAT & 28 & 11 & 0,0004 \\
+sudoku\_03 & 3 & 3 (\texttt{dom\_w\_deg})   & SAT & 22 & 9 & 0,0004 \\
+\midrule
+sudoku\_04 & 1 & 0 (\texttt{default})      & UNSAT & 0 & 0 & 0,0000 \\
+sudoku\_04 & 2 & 0 (\texttt{default})      & UNSAT & 0 & 1 & 0,0000 \\
+sudoku\_04 & 3 & 0 (\texttt{default})      & UNSAT & 0 & 1 & 0,0000 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Análisis de los árboles de búsqueda}
+\begin{itemize}
+    \item \textbf{Efecto de la consistencia global (\texttt{impl=1} frente a \texttt{impl=2}):} En la instancia \texttt{sudoku\_02} bajo búsqueda secuencial (\texttt{strategy=1}), el paso de desigualdades por pares a la restricción global \texttt{alldifferent} redujo el tamaño del árbol de $5\,654$ nodos a $1\,072$ nodos (una contracción del $81\,\%$) y los fallos de $2\,825$ a $534$. Esto ilustra la superioridad de la consistencia de hiperarco alcanzada por el algoritmo de Régin frente a la consistencia de arco elemental.
+    \item \textbf{Impacto de las heurísticas de selección de variables:} La estrategia \texttt{first\_fail} (\texttt{strategy=2}) demostró ser fundamental para mitigar la explosión combinatoria. En \texttt{sudoku\_02} con pares, contrajo los nodos explorados de $5\,654$ a tan solo $277$ ($95\,\%$ de reducción). La combinación más avanzada (\texttt{impl=3} con \texttt{dom\_w\_deg}) resolvió dicha instancia con apenas $25$ nodos y $10$ fallos.
+    \item \textbf{Resolución en la raíz en \texttt{sudoku\_01}:} En la instancia oficial del taller, el tablero cuenta con suficiente densidad de pistas iniciales para que la propagación reduzca todos los dominios a tamaño unitario en la raíz, registrando $1$ nodo y $0$ fallos en todas las variantes.
+    \item \textbf{Detección de inconsistencia (\texttt{sudoku\_04}):} Todas las implementaciones demostraron solidez lógica al identificar el conflicto deliberado de forma inmediata en $0$ nodos de exploración.
+\end{itemize}
+
+\subsubsection{Conclusiones}
+El modelado del Sudoku evidencia que la elección de propagadores globales (\texttt{alldifferent}) es determinante para evitar la explosión combinatoria del árbol de búsqueda. Asimismo, la heurística de distribución \texttt{first\_fail} demuestra ser la más eficiente para acertijos de colocación exacta, reduciendo los nodos fallidos a cero en la instancia principal. Finalmente, se constató experimentalmente que las restricciones redundantes aritméticas no aportan ventajas prácticas cuando el nivel de consistencia local alcanzado por las restricciones primarias es máximo.

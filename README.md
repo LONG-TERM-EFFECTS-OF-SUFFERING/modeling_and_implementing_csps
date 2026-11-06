@@ -16,9 +16,9 @@ Workshop 1 (*Taller 1: Modelamiento e implementación de CSPs*) of *Programació
 
 | § | Problem | Model file | Code folder | Report section | Owner | Status |
 |---|---|---|---|---|---|---|
-| 2.1 | Sudoku | `sudoku.mzn` | `scr/sudoku/` | `content/03_03-sudoku.tex` | | Pending |
+| 2.1 | Sudoku | `sudoku.mzn` | `scr/sudoku/` | `content/03_03-sudoku.tex` | Santiago | Done |
 | 2.2 | Kakuro | `kakuro.mzn` | `scr/kakuro/` | `content/03_05-kakuro.tex` | Brandon | Done; Gist screenshots missing |
-| 2.3 | Secuencia mágica | `secuencia.mzn` | `scr/magical_sequence/` | `content/03_02-magical_sequence.tex` | | Pending |
+| 2.3 | Secuencia mágica | `secuencia.mzn` | `scr/magical_sequence/` | `content/03_02-magical_sequence.tex` | Santiago | Done |
 | 2.4 | Acertijo lógico | `acertijo.mzn` | `scr/logic_puzzle/` | `content/03_01-logic_puzzle.tex` | Alexis | Code and tests done; report pending |
 | 2.5 | Ubicación de personas en una reunión | `reunion.mzn` | `scr/meeting/` | `content/03_04-meeting.tex` | Alexis | Code and tests done; report pending |
 | 2.6 | Construcción de un rectángulo | `rectangulo.mzn` | `scr/rectangle/` | `content/03_06-rectangle.tex` | Brandon | Done; Gist screenshots missing |
