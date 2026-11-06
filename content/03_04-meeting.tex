@@ -104,7 +104,7 @@ pos_1 \leq pos_n
 
 Esta condición permite eliminar soluciones simétricas producidas por la reflexión de la fila. Debido a que las restricciones de consecutividad, separación y distancia máxima dependen de diferencias absolutas entre posiciones, invertir el orden de la fila conserva la validez de una solución.
 
-Por tanto, se establece una orientación específica para evitar explorar ambas configuraciones equivalentes. Es importante aclarar que esta condición no modifica las reglas originales del problema, sino que reduce el espacio de búsqueda al seleccionar una representación entre soluciones simétricas.
+Por tanto, se establece una orientación específica para evitar explorar ambas configuraciones equivalentes. Es importante aclarar que esta condición no modifica las reglas originales del problema, sino que reduce el espacio de búsqueda al seleccionar una representación entre soluciones simétricas. Las soluciones eliminadas se recuperan invirtiendo la fila, es decir, cambiando cada $pos_i$ por $n + 1 - pos_i$. Al enumerar todas las soluciones de las diez instancias, la tercera implementación conserva exactamente la mitad de las que encuentra la primera.
 
 \subsubsection{Detalles de implementación}
 
@@ -138,14 +138,16 @@ La combinación de las tres implementaciones con las tres estrategias permite ev
 
 Se realizaron pruebas con diez instancias diferentes, combinando cada una de las tres implementaciones con las tres estrategias de búsqueda, obteniendo un total de 90 ejecuciones.
 
-La siguiente tabla presenta el estado de cada instancia y los rangos de nodos, fallos y profundidad registrados entre sus nueve configuraciones.
+La Tabla~\ref{tab:reunion-instancias} presenta el estado de cada instancia y los rangos de nodos, fallos y profundidad registrados entre sus nueve configuraciones.
 
-\begin{center}
+\begin{table}[htbp]
 \small
-\begin{tabular}{|c|c|c|c|c|}
-\hline
+\caption{Estado y rangos de nodos, fallos y profundidad por instancia}
+\label{tab:reunion-instancias}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
 \textbf{Instancia} & \textbf{Estado} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Profundidad} \\
-\hline
+\midrule
 reunion\_01 & SAT & 9--11 & 1--2 & 7--8 \\
 reunion\_02 & SAT & 3 & 0 & 2 \\
 reunion\_03 & SAT & 8--41 & 1--17 & 6--11 \\
@@ -156,9 +158,9 @@ reunion\_07 & INSAT & 9--51 & 5--26 & 1--8 \\
 reunion\_08 & SAT & 5--11 & 0--3 & 4--7 \\
 reunion\_09 & SAT & 7--50 & 0--21 & 6--11 \\
 reunion\_10 & SAT & 8--33 & 1--13 & 6--9 \\
-\hline
+\bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 Se observa que nueve de las diez instancias son satisfacibles, mientras que la instancia \texttt{reunion\_07} no presenta ninguna solución válida.
 
@@ -187,16 +189,16 @@ A partir de las pruebas realizadas se pueden identificar los siguientes aspectos
 
     \item \textbf{Ruptura de simetría:} la tercera implementación permite eliminar configuraciones equivalentes por reflexión. No obstante, su efecto sobre el número de nodos y fallos varía según la instancia y la estrategia utilizada.
 
-    \item \textbf{Tiempos de ejecución:} los tiempos de búsqueda registrados fueron muy pequeños, aproximadamente entre 0.0001 y 0.0009 segundos. Por esta razón, no es conveniente establecer conclusiones generales de rendimiento basándose únicamente en estas diferencias. El tiempo de compilación fue considerablemente mayor que el tiempo de búsqueda.
+    \item \textbf{Tiempos de ejecución:} los tiempos de búsqueda registrados fueron muy pequeños, aproximadamente entre 0,0001 y 0,0009 segundos. Por esta razón, no es conveniente establecer conclusiones generales de rendimiento basándose únicamente en estas diferencias. El tiempo de compilación fue considerablemente mayor que el tiempo de búsqueda.
 \end{itemize}
 
 Un caso importante es la instancia \texttt{reunion\_07}, cuya insatisfacibilidad puede demostrarse directamente a partir de sus restricciones.
 
 En esta instancia, Andrés, Felipe y Santiago deben ocupar posiciones consecutivas, ya que Andrés debe estar junto a Felipe y Felipe junto a Santiago. Por tanto, las tres personas forman necesariamente un bloque de tres posiciones consecutivas.
 
-Como existen cinco personas en total, las dos posiciones restantes también deben ser consecutivas, independientemente de dónde se ubique el bloque. Estas posiciones deben ser ocupadas por Camilo y Valeria.
+Como existen cinco personas en total, Camilo y Valeria ocupan las dos posiciones restantes. Si el bloque está en un extremo de la fila (posiciones 1 a 3 o 3 a 5), esas dos posiciones son consecutivas, lo que contradice la separación entre Camilo y Valeria.
 
-Sin embargo, la restricción de separación establece que Camilo y Valeria no pueden ocupar posiciones consecutivas. Esto genera una contradicción, por lo que la instancia no tiene solución.
+Si el bloque ocupa el centro (posiciones 2 a 4), Felipe queda en la posición 3 y Camilo y Valeria en los extremos 1 y 5. Como Andrés no puede estar junto a Valeria, Andrés y Valeria quedan en lados opuestos; entonces Santiago queda junto a Valeria y Camilo en el extremo contrario, con dos personas entre Santiago y Camilo. Esto contradice la distancia máxima de una persona entre ellos, por lo que la instancia no tiene solución.
 
 \subsubsection{Conclusiones del ejercicio}
 

@@ -65,7 +65,7 @@ Las restricciones del problema se dividen en condiciones de unicidad y pistas es
 
 \textbf{1. Unicidad de valores}
 
-Cada persona debe tener una edad, un apellido y un género musical diferentes. Se expresa mediante:
+Cada persona debe tener una edad, un apellido y un género musical diferentes. El enunciado no dice explícitamente que las edades sean distintas, solo que están entre 24 y 26 años; se asume porque, sin esa condición, el acertijo tiene cinco soluciones en lugar de una. Se expresa mediante:
 
 \[
 \forall i,j \in Nombres,\ i \neq j:
@@ -90,6 +90,7 @@ Estas condiciones se implementan mediante desigualdades explícitas o utilizando
 La persona con apellido Gonzales debe ser menor que Juan y preferir música clásica:
 
 \[
+\forall j \in Nombres:\;
 apellido[j] = Gonzales
 \Rightarrow
 \left(
@@ -104,6 +105,7 @@ musica[j] = Clasica
 Quien prefiera música Pop no puede tener el apellido García ni tener 24 años:
 
 \[
+\forall i \in Nombres:\;
 musica[i] = Pop
 \Rightarrow
 \left(
@@ -190,22 +192,20 @@ Se implementaron tres estrategias de búsqueda. Todas utilizan \texttt{indomain\
     \item \textbf{Estrategia 3: smallest.} Selecciona la variable cuyo menor valor disponible sea el más pequeño.
 \end{itemize}
 
-La siguiente tabla resume las estrategias:
+La Tabla~\ref{tab:acertijo-estrategias} resume las estrategias.
 
-\begin{table}[H]
-\centering
-\begin{tabular}{|c|c|c|}
-\hline
+\begin{table}[htbp]
+\caption{Estrategias de búsqueda implementadas}
+\label{tab:acertijo-estrategias}
+\begin{tabular}{@{}ccc@{}}
+\toprule
 \textbf{Estrategia} & \textbf{Selección de variable} & \textbf{Asignación de valor} \\
-\hline
+\midrule
 1 & input\_order & indomain\_min \\
-\hline
 2 & first\_fail & indomain\_min \\
-\hline
 3 & smallest & indomain\_min \\
-\hline
+\bottomrule
 \end{tabular}
-\caption{Estrategias de búsqueda implementadas.}
 \end{table}
 
 \subsubsection{Pruebas}
@@ -224,42 +224,34 @@ La configuración utilizada fue:
 
 Se utilizó la opción \texttt{-s} de MiniZinc para obtener estadísticas de resolución, incluyendo tiempo, nodos, fallos y profundidad máxima.
 
-Los resultados fueron:
+La Tabla~\ref{tab:acertijo-resultados} muestra los resultados.
 
-\begin{table}[H]
-\centering
+\begin{table}[htbp]
 \small
-\begin{tabular}{|c|c|c|c|c|c|c|}
-\hline
+\caption{Resultados de las pruebas con Gecode}
+\label{tab:acertijo-resultados}
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
 \textbf{Impl.} & \textbf{Estrategia} & \textbf{Estado} & \textbf{Tiempo (s)} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Prof.} \\
-\hline
-1 & 1 & sat & 0.0001276 & 3 & 1 & 1 \\
-\hline
-1 & 2 & sat & 0.0001284 & 3 & 1 & 1 \\
-\hline
-1 & 3 & sat & 0.0001315 & 5 & 1 & 3 \\
-\hline
-2 & 1 & sat & 0.0001322 & 3 & 1 & 1 \\
-\hline
-2 & 2 & sat & 0.0001418 & 3 & 1 & 1 \\
-\hline
-2 & 3 & sat & 0.0001370 & 5 & 1 & 3 \\
-\hline
-3 & 1 & sat & 0.0000979 & 1 & 0 & 0 \\
-\hline
-3 & 2 & sat & 0.0000953 & 1 & 0 & 0 \\
-\hline
-3 & 3 & sat & 0.0001555 & 1 & 0 & 0 \\
-\hline
+\midrule
+1 & 1 & sat & 0,0001276 & 3 & 1 & 1 \\
+1 & 2 & sat & 0,0001284 & 3 & 1 & 1 \\
+1 & 3 & sat & 0,0001315 & 5 & 1 & 3 \\
+2 & 1 & sat & 0,0001322 & 3 & 1 & 1 \\
+2 & 2 & sat & 0,0001418 & 3 & 1 & 1 \\
+2 & 3 & sat & 0,0001370 & 5 & 1 & 3 \\
+3 & 1 & sat & 0,0000979 & 1 & 0 & 0 \\
+3 & 2 & sat & 0,0000953 & 1 & 0 & 0 \\
+3 & 3 & sat & 0,0001555 & 1 & 0 & 0 \\
+\bottomrule
 \end{tabular}
-\caption{Resultados de las pruebas con Gecode.}
 \end{table}
 
 Todas las ejecuciones finalizaron con estado \texttt{sat}, indicando que se encontró una solución válida. No se utilizó la opción \texttt{-a}, por lo que no se enumeraron todas las soluciones posibles.
 
 \subsubsection{Análisis de los árboles de búsqueda}
 
-En las implementaciones 1 y 2 se obtuvieron los mismos resultados en cuanto a nodos, fallos y profundidad:
+En las implementaciones 1 y 2 se obtuvieron los mismos resultados en cuanto a nodos, fallos y profundidad (Tabla~\ref{tab:acertijo-arbol}):
 
 \begin{itemize}
     \item Estrategias 1 y 2: 3 nodos, 1 fallo y profundidad 1.
@@ -270,32 +262,24 @@ Por otra parte, la implementación 3 obtuvo 1 nodo, 0 fallos y profundidad 0 en 
 
 Esto muestra que las restricciones redundantes facilitaron la propagación, permitiendo encontrar una solución sin necesidad de realizar ramificaciones registradas en las estadísticas.
 
-\begin{table}[H]
-\centering
-\begin{tabular}{|c|c|c|c|c|}
-\hline
+\begin{table}[htbp]
+\caption{Estadísticas de los árboles de búsqueda}
+\label{tab:acertijo-arbol}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
 \textbf{Implementación} & \textbf{Estrategia} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Profundidad} \\
-\hline
+\midrule
 1 & 1 & 3 & 1 & 1 \\
-\hline
 1 & 2 & 3 & 1 & 1 \\
-\hline
 1 & 3 & 5 & 1 & 3 \\
-\hline
 2 & 1 & 3 & 1 & 1 \\
-\hline
 2 & 2 & 3 & 1 & 1 \\
-\hline
 2 & 3 & 5 & 1 & 3 \\
-\hline
 3 & 1 & 1 & 0 & 0 \\
-\hline
 3 & 2 & 1 & 0 & 0 \\
-\hline
 3 & 3 & 1 & 0 & 0 \\
-\hline
+\bottomrule
 \end{tabular}
-\caption{Estadísticas de los árboles de búsqueda.}
 \end{table}
 
 Estos resultados corresponden a búsquedas detenidas al encontrar una solución, por lo que no representan necesariamente el árbol completo.
@@ -306,9 +290,9 @@ Las implementaciones 1 y 2 presentaron estadísticas de búsqueda idénticas. Es
 
 En cambio, la implementación 3 obtuvo mejores resultados en estos indicadores. Al agregar las restricciones redundantes, el solver pudo deducir anticipadamente información de las pistas originales, reduciendo los nodos de 3 o 5 a solamente 1 y eliminando los fallos registrados.
 
-En cuanto al tiempo de búsqueda, el menor valor fue de 0.0000953 segundos, correspondiente a la implementación 3 con la estrategia 2. El mayor fue de 0.0001555 segundos, correspondiente a la implementación 3 con la estrategia 3.
+En cuanto al tiempo de búsqueda, el menor valor fue de 0,0000953 segundos, correspondiente a la implementación 3 con la estrategia 2. El mayor fue de 0,0001555 segundos, correspondiente a la implementación 3 con la estrategia 3.
 
-Los tiempos son extremadamente pequeños, por lo que sus diferencias deben interpretarse con precaución. Además, el tiempo de compilación estuvo entre 0.176 y 0.189 segundos, considerablemente por encima del tiempo de búsqueda.
+Los tiempos son extremadamente pequeños, por lo que sus diferencias deben interpretarse con precaución. Además, el tiempo de compilación estuvo entre 0,176 y 0,189 segundos, considerablemente por encima del tiempo de búsqueda.
 
 Finalmente, dado que solo se evaluó una instancia, no es posible generalizar estos resultados a todos los problemas de acertijos lógicos.
 

@@ -1,7 +1,11 @@
 \subsection{Sudoku}
 \label{sec:sudoku}
 
-\subsubsection{El Modelo}
+\subsubsection{Descripción del problema}
+
+El Sudoku es un rompecabezas sobre una cuadrícula de $9 \times 9$ celdas dividida en nueve subcuadrículas de $3 \times 3$. Partiendo de algunas cifras ya dispuestas, hay que llenar las celdas vacías con cifras del 1 al 9 sin repetir ninguna en una misma fila, columna o subcuadrícula. Un Sudoku está bien planteado si su solución es única.
+
+\subsubsection{Modelo}
 El problema del Sudoku se formula formalmente como un Problema de Satisfacción de Restricciones (CSP) definido por la terna $\mathcal{P} = \langle \mathcal{V}, \mathcal{D}, \mathcal{C} \rangle$ \parencite{apt2003principles}:
 
 \paragraph{Parámetros}
@@ -28,7 +32,7 @@ D_{i,j} =
 \]
 Los dominios excluyen desde su especificación el valor cero y cualquier entero negativo o superior a nueve, restringiendo el espacio de búsqueda estrictamente a los dígitos permitidos por el juego.
 
-\paragraph{Restricciones del problema}
+\paragraph{Restricciones}
 El modelo incorpora tres familias de restricciones fundamentales:
 \begin{itemize}
     \item \textbf{[R1] Restricción sobre filas:} En cada fila $i$, todos los elementos deben ser distintos:
@@ -45,19 +49,7 @@ El modelo incorpora tres familias de restricciones fundamentales:
     \]
 \end{itemize}
 
-\subsubsection{Detalles Importantes de Implementación}
-Se comparan dos formas de modelar la exclusión mutua en MiniZinc mediante el parámetro \texttt{impl}:
-\begin{enumerate}
-    \item \textbf{Implementación 1 (\texttt{impl=1}):} Descomposición en desigualdades binarias por pares ($s_{i,j1} \neq s_{i,j2}$). Este enfoque induce una red de restricciones binarias cuyo propagador únicamente remueve un valor cuando otra variable del par ha sido fijada a un valor singular (consistencia de arco o comprobación hacia adelante).
-    \item \textbf{Implementación 2 (\texttt{impl=2}):} Restricción global \texttt{alldifferent}. Utiliza el algoritmo de emparejamiento máximo en grafos bipartitos propuesto por \textcite{regin1994filtering}, alcanzando consistencia de hiperarco (\textit{hyper-arc consistency}). Esto permite descartar valores en conjuntos de variables antes de que estas sean instanciadas.
-\end{enumerate}
-
-\subsubsection{Rompimiento de Simetrías}
-En un tablero de Sudoku vacío existen $3\,359\,232$ simetrías de preservación de solución (permutación de símbolos, permutación de bandas, permutación de columnas y filas dentro de bandas y reflexión trasversal). 
-
-No obstante, en las instancias del problema dadas por el enunciado existen pistas iniciales fijas. Dichas pistas actúan como restricciones unarias rígidas que anclan las identidades de las filas, columnas y dígitos. Imponer restricciones de rompimiento de simetría (\textbf{[RS1]}), tales como órdenes lexicográficos en las filas, resultaría incorrecto pues descartaría la solución única del acertijo. Por ende, no aplica imponer restricciones que rompan simetrías en este modelo.
-
-\subsubsection{Restricciones Redundantes}
+\paragraph{Restricciones redundantes}
 Puesto que cada fila, columna y caja contiene una permutación de los números $\{1, \dots, 9\}$, la suma total de sus elementos satisface:
 \[
 \sum_{k=1}^9 k = \frac{9 \times 10}{2} = 45
@@ -70,7 +62,19 @@ Bajo la configuración \texttt{impl=3}, se agregan las siguientes restricciones 
 \end{itemize}
 Dichas restricciones son matemáticamente redundantes porque no eliminan ninguna asignación válida. Su función teórica es activar propagadores de intervalo (\textit{bounds consistency}) sobre sumas lineales, con el objetivo de acotar dominios en etapas tempranas.
 
-\subsubsection{Estrategias de Búsqueda}
+\paragraph{Ruptura de simetrías}
+En un tablero de Sudoku vacío existen $3\,359\,232$ simetrías de preservación de solución (permutaciones de bandas y de pilas, de filas y columnas dentro de ellas, y transposición), a las que se suman las $9!$ permutaciones de los dígitos. 
+
+No obstante, en las instancias del problema dadas por el enunciado existen pistas iniciales fijas. Dichas pistas actúan como restricciones unarias rígidas que anclan las identidades de las filas, columnas y dígitos. Imponer restricciones de rompimiento de simetría (\textbf{[RS1]}), tales como órdenes lexicográficos en las filas, resultaría incorrecto pues descartaría la solución única del acertijo. Por ende, no aplica imponer restricciones que rompan simetrías en este modelo.
+
+\subsubsection{Detalles de implementación}
+Se comparan dos formas de modelar la exclusión mutua en MiniZinc mediante el parámetro \texttt{impl}:
+\begin{enumerate}
+    \item \textbf{Implementación 1 (\texttt{impl=1}):} Descomposición en desigualdades binarias por pares ($s_{i,j1} \neq s_{i,j2}$). Este enfoque induce una red de restricciones binarias cuyo propagador únicamente remueve un valor cuando otra variable del par ha sido fijada a un valor singular (consistencia de arco o comprobación hacia adelante).
+    \item \textbf{Implementación 2 (\texttt{impl=2}):} Restricción global \texttt{alldifferent}. Utiliza el algoritmo de emparejamiento máximo en grafos bipartitos propuesto por \textcite{regin1994filtering}, alcanzando consistencia de hiperarco (\textit{hyper-arc consistency}). Esto permite descartar valores en conjuntos de variables antes de que estas sean instanciadas.
+\end{enumerate}
+
+\subsubsection{Estrategias de búsqueda}
 Se contrastaron las siguientes estrategias de distribución mediante el parámetro \texttt{strategy}:
 \begin{itemize}
     \item \textbf{Estrategia 0 (\texttt{strategy=0}):} Búsqueda estándar por defecto del solver Gecode.
@@ -79,15 +83,14 @@ Se contrastaron las siguientes estrategias de distribución mediante el parámet
     \item \textbf{Estrategia 3 (\texttt{strategy=3}):} Heurística adaptativa basada en peso de fallos (\texttt{dom\_w\_deg}) con \texttt{indomain\_min}.
 \end{itemize}
 
-\subsubsection{Pruebas y Análisis de Resultados}
+\subsubsection{Pruebas}
 La batería de pruebas se evaluó de manera exhaustiva sobre el solver Gecode con un tiempo límite de $60$~s por experimento. Para evidenciar el impacto tanto de las implementaciones como de las heurísticas de búsqueda, se seleccionaron instancias representativas: la instancia base del enunciado (\texttt{sudoku\_01}), una de dificultad intermedia (\texttt{sudoku\_02}), una de alta dificultad (\texttt{sudoku\_03}) y una instancia contradictoria (\texttt{sudoku\_04}). Los datos extraídos de \texttt{results/sudoku\_gecode.csv} se consolidan en la Tabla~\ref{tab:sudoku-resultados}.
 
-\begin{table}[h!]
-\centering
+\begin{table}[htbp]
 \small
-\caption{Resultados experimentales de la batería de pruebas para el Sudoku.}
+\caption{Resultados experimentales de la batería de pruebas para el Sudoku}
 \label{tab:sudoku-resultados}
-\begin{tabularx}{\textwidth}{l c c c r r r}
+\begin{tabular}{lcccrrr}
 \toprule
 \textbf{Instancia} & \textbf{Impl.} & \textbf{Estrategia} & \textbf{Estado} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Tiempo (s)} \\
 \midrule
@@ -112,16 +115,20 @@ sudoku\_04 & 1 & 0 (\texttt{default})      & UNSAT & 0 & 0 & 0,0000 \\
 sudoku\_04 & 2 & 0 (\texttt{default})      & UNSAT & 0 & 1 & 0,0000 \\
 sudoku\_04 & 3 & 0 (\texttt{default})      & UNSAT & 0 & 1 & 0,0000 \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
-\paragraph{Análisis de los árboles de búsqueda}
+\subsubsection{Análisis de los árboles de búsqueda}
 \begin{itemize}
-    \item \textbf{Efecto de la consistencia global (\texttt{impl=1} frente a \texttt{impl=2}):} En la instancia \texttt{sudoku\_02} bajo búsqueda secuencial (\texttt{strategy=1}), el paso de desigualdades por pares a la restricción global \texttt{alldifferent} redujo el tamaño del árbol de $5\,654$ nodos a $1\,072$ nodos (una contracción del $81\,\%$) y los fallos de $2\,825$ a $534$. Esto ilustra la superioridad de la consistencia de hiperarco alcanzada por el algoritmo de Régin frente a la consistencia de arco elemental.
-    \item \textbf{Impacto de las heurísticas de selección de variables:} La estrategia \texttt{first\_fail} (\texttt{strategy=2}) demostró ser fundamental para mitigar la explosión combinatoria. En \texttt{sudoku\_02} con pares, contrajo los nodos explorados de $5\,654$ a tan solo $277$ ($95\,\%$ de reducción). La combinación más avanzada (\texttt{impl=3} con \texttt{dom\_w\_deg}) resolvió dicha instancia con apenas $25$ nodos y $10$ fallos.
     \item \textbf{Resolución en la raíz en \texttt{sudoku\_01}:} En la instancia oficial del taller, el tablero cuenta con suficiente densidad de pistas iniciales para que la propagación reduzca todos los dominios a tamaño unitario en la raíz, registrando $1$ nodo y $0$ fallos en todas las variantes.
     \item \textbf{Detección de inconsistencia (\texttt{sudoku\_04}):} Todas las implementaciones demostraron solidez lógica al identificar el conflicto deliberado de forma inmediata en $0$ nodos de exploración.
 \end{itemize}
 
-\subsubsection{Conclusiones}
-El modelado del Sudoku evidencia que la elección de propagadores globales (\texttt{alldifferent}) es determinante para evitar la explosión combinatoria del árbol de búsqueda. Asimismo, la heurística de distribución \texttt{first\_fail} demuestra ser la más eficiente para acertijos de colocación exacta, reduciendo los nodos fallidos a cero en la instancia principal. Finalmente, se constató experimentalmente que las restricciones redundantes aritméticas no aportan ventajas prácticas cuando el nivel de consistencia local alcanzado por las restricciones primarias es máximo.
+\subsubsection{Análisis de resultados}
+\begin{itemize}
+    \item \textbf{Efecto de la consistencia global (\texttt{impl=1} frente a \texttt{impl=2}):} En la instancia \texttt{sudoku\_02} bajo búsqueda secuencial (\texttt{strategy=1}), el paso de desigualdades por pares a la restricción global \texttt{alldifferent} redujo el tamaño del árbol de $5\,654$ nodos a $1\,072$ nodos (una contracción del 81\%) y los fallos de $2\,825$ a $534$. Esto ilustra la superioridad de la consistencia de hiperarco alcanzada por el algoritmo de Régin frente a la consistencia de arco elemental.
+    \item \textbf{Impacto de las heurísticas de selección de variables:} La estrategia \texttt{first\_fail} (\texttt{strategy=2}) demostró ser fundamental para mitigar la explosión combinatoria. En \texttt{sudoku\_02} con pares, contrajo los nodos explorados de $5\,654$ a tan solo $277$ (95\% de reducción). La combinación más avanzada (\texttt{impl=3} con \texttt{dom\_w\_deg}) resolvió dicha instancia con apenas $25$ nodos y $10$ fallos.
+\end{itemize}
+
+\subsubsection{Conclusiones del ejercicio}
+El modelado del Sudoku evidencia que la elección de propagadores globales (\texttt{alldifferent}) es determinante para evitar la explosión combinatoria del árbol de búsqueda. Asimismo, las heurísticas \texttt{first\_fail} y \texttt{dom\_w\_deg} reducen drásticamente el árbol frente al orden secuencial (en \texttt{sudoku\_02} con pares, de $5\,654$ a $277$ y $141$ nodos). Finalmente, las restricciones redundantes aritméticas no modificaron el árbol con \texttt{input\_order} ni con \texttt{first\_fail}, y solo lo redujeron con \texttt{dom\_w\_deg} (de $141$ a $25$ nodos en \texttt{sudoku\_02}).

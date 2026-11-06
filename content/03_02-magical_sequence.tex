@@ -1,8 +1,12 @@
-\subsection{Secuencia Mágica}
+\subsection{Secuencia mágica}
 \label{sec:secuencia}
 
-\subsubsection{El Modelo}
-Una secuencia mágica de longitud $n$ es una tupla $x_0, \dots, x_{n-1}$ donde cada componente $x_i$ cuantifica el número de apariciones del valor $i$ en toda la secuencia. Formalmente se modela como el CSP $\mathcal{P} = \langle \mathcal{V}, \mathcal{D}, \mathcal{C} \rangle$ \parencite{apt2003principles}:
+\subsubsection{Descripción del problema}
+
+Una secuencia mágica de longitud $n$ es una tupla $x_0, \dots, x_{n-1}$ donde cada componente $x_i$ cuantifica el número de apariciones del valor $i$ en toda la secuencia. El enunciado pide un modelo parametrizado en $n$ que enumere todas las secuencias mágicas de longitud $n$, y luego agregarle dos restricciones redundantes dadas.
+
+\subsubsection{Modelo}
+Formalmente se modela como el CSP $\mathcal{P} = \langle \mathcal{V}, \mathcal{D}, \mathcal{C} \rangle$ \parencite{apt2003principles}:
 
 \paragraph{Parámetros}
 \begin{itemize}
@@ -22,7 +26,7 @@ D_i = \{0, 1, \dots, n-1\}, \quad \forall i \in \{0, \dots, n-1\}
 \]
 Se acota superiormente en $n-1$ debido a que ninguna variable puede tomar el valor $n$ (si un número apareciera $n$ veces, ocuparía todas las casillas, obligando a que existan al menos dos números distintos en la secuencia, lo cual es contradictorio).
 
-\paragraph{Restricciones del problema}
+\paragraph{Restricciones}
 \begin{itemize}
     \item \textbf{[R1] Restricción de conteo exacto:} Cada posición $i$ debe coincidir con la sumatoria de coincidencias del valor $i$ en el arreglo:
     \[
@@ -31,18 +35,7 @@ Se acota superiormente en $n-1$ debido a que ninguna variable puede tomar el val
     donde $[\cdot]$ denota el corchete de Iverson.
 \end{itemize}
 
-\subsubsection{Detalles Importantes de Implementación}
-Se estructuraron tres implementaciones incrementales mediante el parámetro \texttt{impl} para cuantificar el impacto de los propagadores lineales:
-\begin{enumerate}
-    \item \textbf{Implementación 1 (\texttt{impl=1}):} Modelo elemental que únicamente contiene la restricción funcional [R1].
-    \item \textbf{Implementación 2 (\texttt{impl=2}):} Incorpora la primera restricción redundante [RR1] junto con [R1].
-    \item \textbf{Implementación 3 (\texttt{impl=3}):} Modelo completo que suma ambas restricciones redundantes [R1, RR1, RR2].
-\end{enumerate}
-
-\subsubsection{Rompimiento de Simetrías}
-En el problema de la Secuencia Mágica \textbf{no existen simetrías que puedan romperse} (\textbf{[RS1]}). La posición $i$ está rígidamente vinculada a la cuenta de ocurrencias del valor $i$. Intercambiar dos variables $x_i$ y $x_j$ o invertir la secuencia destruiría la relación funcional del modelo. En consecuencia, toda solución es canónica y única en su representación, por lo que no procede aplicar restricciones de simetría.
-
-\subsubsection{Restricciones Redundantes}
+\paragraph{Restricciones redundantes}
 El enunciado introduce dos restricciones fundamentales para reducir el árbol de búsqueda:
 \begin{itemize}
     \item \textbf{[RR1] Suma total fija:}
@@ -61,10 +54,20 @@ El enunciado introduce dos restricciones fundamentales para reducir el árbol de
     \]
 \end{itemize}
 
-\paragraph{Efecto en la poda del árbol}
-Mientras que [R1] propaga de forma tardía (cuando las variables ya están instanciadas), [RR1] y [RR2] son ecuaciones lineales diofánticas. Los propagadores de intervalos asociados (\textit{bounds consistency}) podan las cotas superiores e inferiores de las variables en cada paso de propagación, eliminando ramas inviables sin necesidad de ramificar.
+\textit{Efecto en la poda del árbol.} Mientras que [R1] propaga de forma tardía (cuando las variables ya están instanciadas), [RR1] y [RR2] son ecuaciones lineales diofánticas. Los propagadores de intervalos asociados (\textit{bounds consistency}) podan las cotas superiores e inferiores de las variables en cada paso de propagación, eliminando ramas inviables sin necesidad de ramificar.
 
-\subsubsection{Estrategias de Búsqueda}
+\paragraph{Ruptura de simetrías}
+En el problema de la Secuencia Mágica \textbf{no existen simetrías que puedan romperse} (\textbf{[RS1]}). La posición $i$ está rígidamente vinculada a la cuenta de ocurrencias del valor $i$. Intercambiar dos variables $x_i$ y $x_j$ o invertir la secuencia destruiría la relación funcional del modelo. En consecuencia, toda solución es canónica y única en su representación, por lo que no procede aplicar restricciones de simetría.
+
+\subsubsection{Detalles de implementación}
+Se estructuraron tres implementaciones incrementales mediante el parámetro \texttt{impl} para cuantificar el impacto de los propagadores lineales:
+\begin{enumerate}
+    \item \textbf{Implementación 1 (\texttt{impl=1}):} Modelo elemental que únicamente contiene la restricción funcional [R1].
+    \item \textbf{Implementación 2 (\texttt{impl=2}):} Incorpora la primera restricción redundante [RR1] junto con [R1].
+    \item \textbf{Implementación 3 (\texttt{impl=3}):} Modelo completo que suma ambas restricciones redundantes [R1, RR1, RR2].
+\end{enumerate}
+
+\subsubsection{Estrategias de búsqueda}
 Se configuraron las siguientes heurísticas de distribución:
 \begin{itemize}
     \item \textbf{\texttt{strategy=0}:} Búsqueda estándar de Gecode.
@@ -73,15 +76,14 @@ Se configuraron las siguientes heurísticas de distribución:
     \item \textbf{\texttt{strategy=3}:} \texttt{dom\_w\_deg} con \texttt{indomain\_min}.
 \end{itemize}
 
-\subsubsection{Pruebas y Análisis de Resultados}
-Los experimentos para la Secuencia Mágica se ejecutaron sobre seis instancias de tamaño progresivo ($n \in \{3, 4, 7, 10, 20, 50\}$). Los resultados obtenidos del archivo \texttt{results/secuencia\_gecode.csv} se sintetizan en la Tabla~\ref{tab:secuencia-resultados}.
+\subsubsection{Pruebas}
+Los experimentos para la Secuencia Mágica se ejecutaron sobre seis instancias de tamaño progresivo ($n \in \{3, 4, 7, 10, 20, 50\}$). Los resultados obtenidos del archivo \texttt{results/secuencia\_gecode.csv} se sintetizan en la Tabla~\ref{tab:secuencia-resultados}. Además, con la opción \texttt{-a} el modelo enumera todas las secuencias de cada longitud: dos para $n = 4$ ($[1, 2, 1, 0]$ y $[2, 0, 2, 0]$), una para $n = 7$, $10$, $20$ y $50$, y ninguna para $n = 3$. Un recorrido exhaustivo en Python, independiente de MiniZinc, confirmó estos conteos para $n \le 7$.
 
-\begin{table}[h!]
-\centering
+\begin{table}[htbp]
 \small
-\caption{Resultados experimentales de la Secuencia Mágica para diferentes órdenes $n$.}
+\caption{Resultados experimentales de la Secuencia Mágica para diferentes órdenes $n$}
 \label{tab:secuencia-resultados}
-\begin{tabularx}{\textwidth}{l c c c r r r}
+\begin{tabular}{lcccrrr}
 \toprule
 \textbf{Instancia} & \textbf{Impl.} & \textbf{Estrategia} & \textbf{Estado} & \textbf{Nodos} & \textbf{Fallos} & \textbf{Tiempo (s)} \\
 \midrule
@@ -108,15 +110,19 @@ secuencia\_06 ($n=3$)  & 1 & 1 (\texttt{input\_order}) & UNSAT & 5 & 3 & 0,0001 
 secuencia\_06 ($n=3$)  & 2 & 1 (\texttt{input\_order}) & UNSAT & 5 & 3 & 0,0001 \\
 secuencia\_06 ($n=3$)  & 3 & 0 (\texttt{default})      & UNSAT & 0 & 1 & 0,0000 \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
-\paragraph{Análisis del árbol de búsqueda y efecto de las restricciones redundantes}
+\subsubsection{Análisis de los árboles de búsqueda}
 \begin{itemize}
-    \item \textbf{Efecto drástico de las restricciones redundantes en $n=50$:} En la prueba de estrés (\texttt{secuencia\_05}), el modelo elemental con \texttt{first\_fail} requirió $2\,733$ nodos y $1\,364$ fallos con un tiempo de $0,2716$~s. Al incorporar la sumatoria de cardinalidad (\texttt{impl=2}, [RR1]), el árbol descendió a $189$ nodos y $92$ fallos. Al añadir la sumatoria diofántica ponderada (\texttt{impl=3}, [RR2]), la búsqueda colapsó a apenas $31$ nodos y $5$ fallos en $0,0006$~s (una reducción global superior al $98,8\,\%$ en exploración y una aceleración de más de $400$ veces).
     \item \textbf{Poda mediante consistencia de cotas (\textit{bounds consistency}):} Las restricciones [RR1] y [RR2] son formalmente ecuaciones lineales diofánticas. A diferencia de [R1], cuyos propagadores solo actúan cuando las variables están fijadas, las restricciones redundantes permiten que el solver ajuste los límites inferior y superior de los dominios en cada propagación analítica, descartando subárboles completos antes de efectuar divisiones (\textit{split}).
     \item \textbf{Detección inmediata en la raíz para $n=3$:} En la instancia insatisfacible \texttt{secuencia\_06}, el modelo base debió explorar $5$ nodos para probar la inexistencia de soluciones. Al activar ambas restricciones redundantes (\texttt{impl=3}), la contradicción matemática fue detectada directamente en la raíz por propagación algebraica ($0$ nodos explorados y $1$ único fallo).
 \end{itemize}
 
-\subsubsection{Conclusiones}
-La formulación de la Secuencia Mágica comprueba de forma empírica la teoría de restricciones redundantes: sin alterar el conjunto de soluciones del problema, transforman un CSP susceptible a una búsqueda combinatoria profunda en un proceso de inferencia casi determinista. La integración conjunta de las ecuaciones de suma total y suma ponderada, junto con la heurística \texttt{first\_fail}, permite resolver instancias de tamaño significativo ($n \ge 50$) en fracciones de milisegundo.
+\subsubsection{Análisis de resultados}
+\begin{itemize}
+    \item \textbf{Efecto drástico de las restricciones redundantes en $n=50$:} En la prueba de estrés (\texttt{secuencia\_05}), el modelo elemental con \texttt{first\_fail} requirió $2\,733$ nodos y $1\,364$ fallos con un tiempo de $0,2716$~s. Al incorporar la sumatoria de cardinalidad (\texttt{impl=2}, [RR1]), el árbol descendió a $189$ nodos y $92$ fallos. Al añadir la sumatoria diofántica ponderada (\texttt{impl=3}, [RR2]), la búsqueda colapsó a apenas $31$ nodos y $5$ fallos en $0,0006$~s (una reducción global superior al 98,8\% en exploración y una aceleración de más de $400$ veces).
+\end{itemize}
+
+\subsubsection{Conclusiones del ejercicio}
+La formulación de la Secuencia Mágica comprueba de forma empírica la teoría de restricciones redundantes: sin alterar el conjunto de soluciones del problema, transforman un CSP susceptible a una búsqueda combinatoria profunda en un proceso de inferencia casi determinista. La integración conjunta de las ecuaciones de suma total y suma ponderada, junto con la heurística \texttt{first\_fail}, permite resolver instancias de tamaño significativo ($n = 50$) en fracciones de milisegundo.

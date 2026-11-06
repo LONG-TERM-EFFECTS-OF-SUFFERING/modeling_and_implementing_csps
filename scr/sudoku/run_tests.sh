@@ -1,71 +1,35 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Corre sudoku.mzn sobre cada instancia de tests/ con todas las combinaciones
+# impl x strategy, y guarda las estadísticas de MiniZinc en results/sudoku_<solver>.csv.
+#
+# Uso:  ./run_tests.sh [solver] [timeout_ms]     (por defecto: gecode 60000)
+#
+# Columnas: tiempo_compilacion_s = flatTime (MiniZinc -> FlatZinc),
+#           tiempo_s = solveTime (búsqueda), nodos, fallos, profundidad = peakDepth.
+# estado: sat = encontró solución, insat = probó que no hay, timeout = se acabó el tiempo.
 
-SOLVER="${1:-gecode}"
-TIMEOUT_MS="${2:-60000}"
-TIMEOUT_S=$(( (TIMEOUT_MS + 999) / 1000 ))
-
-MODELO="sudoku"
+set -u
+cd "$(dirname "$0")"
+MODELO=sudoku
 IMPLS="1 2 3"
 ESTRATEGIAS="0 1 2 3"
-
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$DIR"
-
+SOLVER=${1:-gecode}; TIMEOUT=${2:-60000}
 mkdir -p results
-OUT="results/${MODELO}_${SOLVER}.csv"
+CSV="results/${MODELO}_${SOLVER}.csv"
+echo "instancia,impl,estrategia,solver,estado,tiempo_compilacion_s,tiempo_s,nodos,fallos,profundidad" > "$CSV"
 
-echo "test,impl,strategy,status,time_sec,nodes,failures,peak_depth,propagations" > "$OUT"
+stat() { echo "$SALIDA" | grep -m1 "^%%%mzn-stat: $1=" | cut -d= -f2; }
 
-echo "=========================================================="
-echo " Ejecutando pruebas para ${MODELO} con ${SOLVER}"
-echo "=========================================================="
-
-for test_path in tests/*.dzn; do
-    test_name="$(basename "$test_path" .dzn)"
-    for impl in $IMPLS; do
-        for strat in $ESTRATEGIAS; do
-            printf "Prueba: %-12s | Impl: %d | Estrat: %d ... " "$test_name" "$impl" "$strat"
-
-            # Ejecutar y limpiar los retornos de carro (\r) de Windows
-            set +e
-            RAW_OUT=$(minizinc --solver "$SOLVER" -s \
-                "${MODELO}.mzn" "$test_path" \
-                -D "impl=${impl};strategy=${strat};" 2>&1 | tr -d '\r')
-            set -e
-
-            # Detección del estado
-            STATUS="SAT"
-            if echo "$RAW_OUT" | grep -q "UNSATISFIABLE"; then
-                STATUS="UNSAT"
-            elif echo "$RAW_OUT" | grep -q "UNKNOWN"; then
-                STATUS="UNKNOWN"
-            fi
-
-            # Extracción limpia de estadísticas de MiniZinc
-            TIME=$(echo "$RAW_OUT" | grep -m1 "solveTime=" | cut -d'=' -f2 || echo "0.0")
-            if [ -z "$TIME" ]; then
-                TIME=$(echo "$RAW_OUT" | grep -m1 "initTime=" | cut -d'=' -f2 || echo "0.0")
-            fi
-
-            NODES=$(echo "$RAW_OUT" | grep -m1 "nodes=" | cut -d'=' -f2 || echo "0")
-            FAILS=$(echo "$RAW_OUT" | grep -m1 "failures=" | cut -d'=' -f2 || echo "0")
-            DEPTH=$(echo "$RAW_OUT" | grep -m1 "peakDepth=" | cut -d'=' -f2 || echo "0")
-            PROPS=$(echo "$RAW_OUT" | grep -m1 "propagations=" | cut -d'=' -f2 || echo "0")
-
-            # Asegurar valores por defecto si vienen vacíos
-            NODES=${NODES:-0}
-            FAILS=${FAILS:-0}
-            DEPTH=${DEPTH:-0}
-            PROPS=${PROPS:-0}
-            TIME=${TIME:-0.0}
-
-            echo "${STATUS} (Nodos: ${NODES}, Fallos: ${FAILS}, Tiempo: ${TIME}s)"
-            echo "${test_name},${impl},${strat},${STATUS},${TIME},${NODES},${FAILS},${DEPTH},${PROPS}" >> "$OUT"
-        done
+for dzn in tests/*.dzn; do
+  for i in $IMPLS; do
+    for s in $ESTRATEGIAS; do
+      SALIDA=$(minizinc --solver "$SOLVER" -s --time-limit "$TIMEOUT" \
+               "${MODELO}.mzn" "$dzn" -D "impl=$i;strategy=$s" 2>&1 | tr -d '\r')
+      if   echo "$SALIDA" | grep -q "=====UNSATISFIABLE====="; then EST=insat
+      elif echo "$SALIDA" | grep -q "^----------";              then EST=sat
+      else EST=timeout; fi
+      echo "$(basename "$dzn" .dzn),$i,$s,$SOLVER,$EST,$(stat flatTime),$(stat solveTime),$(stat nodes),$(stat failures),$(stat peakDepth)" >> "$CSV"
     done
+  done
 done
-
-echo "=========================================================="
-echo " Resultados exportados exitosamente a ${OUT}"
-echo "=========================================================="
+echo "Resultados en $CSV"

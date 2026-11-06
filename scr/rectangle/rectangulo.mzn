@@ -1,7 +1,7 @@
 % =====================================================================
 % Taller 1 - Programación por Restricciones
 % Ejercicio 2.6: Construcción de un rectángulo
-% Autores: <nombre1> (<código1>), <nombre2> (<código2>), <nombre3> (<código3>)
+% Autores: Brandon Calderón Prieto (2125974)
 % Uso:     minizinc --solver gecode -s rectangulo.mzn tests/rectangulo_01.dzn -D "impl=5;strategy=3"
 %
 % Implementaciones (impl):

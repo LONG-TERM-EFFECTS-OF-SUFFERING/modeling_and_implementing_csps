@@ -172,9 +172,6 @@ Para el tablero 1 se recorrió el árbol completo con la estrategia 1, buscando 
     \end{tabular}
 \end{table}
 
-% TODO Figura: captura de Gecode Gist del tablero 1 con impl 2 y strategy 1
-% TODO Figura: captura de Gecode Gist del tablero 1 con impl 3 y strategy 1
-
 Con \texttt{impl} 1 y 2 el árbol es poco profundo (2 o 3 decisiones), pero casi la mitad de sus nodos son fallos. El solver descubre que eligió mal un dígito solo después de fijar una o dos casillas más. Con \texttt{impl} 3 el árbol se reduce a la raíz: la propagación por sí sola fija las 14 casillas. La propagación sigue esta cadena:
 
 \begin{enumerate}

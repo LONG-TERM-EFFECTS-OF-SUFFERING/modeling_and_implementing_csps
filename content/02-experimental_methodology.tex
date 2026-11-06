@@ -1,4 +1,87 @@
-
 \section{Metodología experimental}
 
-% common to all exercises, written once: hardware, timeout, metrics, how instances were chosen, how to read the tables
+Todos los ejercicios se evaluaron con el mismo protocolo, para que sus resultados sean comparables entre sí y para que cualquier lector pueda reproducirlos con los archivos entregados.
+
+\subsection{Entorno de ejecución}
+
+Se usó MiniZinc~2.9.3 en su paquete completo, salvo en el Sudoku y la secuencia mágica, cuyas corridas se hicieron con la instalación de su autor. Todas las corridas que se analizan en el informe usan Gecode; Chuffed~0.13.2 se usó solo para verificar resultados y como comparación puntual. Las corridas de Kakuro y de la construcción de un rectángulo se ejecutaron en un procesador Intel Xeon a 2,10~GHz con 2 núcleos y 7~GB de memoria, sobre Linux. Las de los otros cuatro ejercicios se ejecutaron en los equipos de sus autores.
+% TODO: completar el equipo de Alexis y el de Santiago (procesador, núcleos, memoria y sistema operativo). Mejor aún: antes de la entrega, correr todos los run_tests.sh en un solo equipo y describir solo ese, para que los tiempos de los seis ejercicios sean comparables.
+
+\subsection{Diseño de los experimentos}
+
+En cada ejercicio, el script \texttt{run\_tests.sh} ejecuta el modelo sobre cada instancia de prueba con todas las combinaciones de implementación (\texttt{impl}) y estrategia de búsqueda (\texttt{strategy}), y guarda las estadísticas de cada corrida en un archivo CSV. La Tabla~\ref{tab:metodologia-corridas} muestra el tamaño de cada experimento; en total se hicieron 551 corridas.
+
+\begin{table}[htbp]
+    \caption{Tamaño de los experimentos por ejercicio}
+    \label{tab:metodologia-corridas}
+    \small
+    \begin{tabularx}{\textwidth}{@{}Lcccc@{}}
+        \toprule
+        Ejercicio & Implementaciones & Estrategias & Instancias & Corridas \\
+        \midrule
+        Acertijo lógico & 3 & 3 & 1 & 9 \\
+        Secuencia mágica & 3 & 4 & 6 & 72 \\
+        Sudoku & 3 & 4 & 4 & 48 \\
+        Ubicación de personas en una reunión & 3 & 3 & 10 & 90 \\
+        Kakuro & 4 & 3 & 11 & 132 \\
+        Construcción de un rectángulo & 5 & 4 & 10 & 200 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Cada corrida tiene un límite de 60~s, que incluye la compilación de MiniZinc a FlatZinc. Una corrida que llega al límite se reporta como tal, junto con los nodos explorados hasta ese momento. El objetivo de cada corrida es encontrar la primera solución o demostrar que no existe. Para comprobar la unicidad de las soluciones y contar las soluciones simétricas, en las instancias pequeñas también se enumeraron todas las soluciones con la opción \texttt{-a}.
+En la secuencia mágica, cuyo enunciado pide enumerar todas las secuencias de longitud $n$, además se enumeraron con \texttt{-a} todas las secuencias de cada longitud de prueba.
+
+Las anotaciones de búsqueda usadas no tienen elecciones aleatorias ni reinicios. Para comprobar la reproducibilidad, se repitieron en otro equipo, con Linux, MiniZinc~2.9.3 y Gecode~6.3.0, todas las corridas que terminan en menos de 2~s. En el acertijo, la reunión, el Kakuro y el rectángulo, el estado, los nodos, los fallos y la profundidad coincidieron en todas, mientras que los tiempos de búsqueda variaron; por ejemplo, el tiempo total de búsqueda del acertijo fue de 1,1~ms en el equipo de su autor y de 0,7~ms en el otro. En el Sudoku y la secuencia mágica coincidieron las 60 corridas con estrategias de orden fijo, pero 22 de las 60 que usan la búsqueda por defecto de Gecode o \texttt{dom\_w\_deg} dieron otros valores. Por eso, con estas dos heurísticas, el número de nodos solo se compara dentro de un mismo ejercicio.
+
+\subsection{Selección de las instancias}
+
+Las instancias de prueba de cada ejercicio se eligieron con cuatro criterios:
+
+\begin{enumerate}
+    \item \textbf{El ejemplo del enunciado}, para comprobar que el modelo resuelve el problema planteado.
+    \item \textbf{Instancias con solución conocida}, como tableros publicados o resultados clásicos \parencite{minizinc-benchmarks,duijvestijn1978}, para verificar la corrección del modelo.
+    \item \textbf{Instancias más grandes}, que obligan al solver a buscar y permiten comparar las estrategias; en el Kakuro y el rectángulo se generaron al azar a partir de una solución válida. Los ejemplos del enunciado suelen ser tan pequeños que la propagación los resuelve sin buscar; por ejemplo, los dos Kakuros del enunciado se resuelven con un solo nodo.
+    \item \textbf{Instancias infactibles}, cuando es posible construirlas, para medir el costo de demostrar que no hay solución. En ese caso el solver debe recorrer todo el árbol de búsqueda, y es donde más se nota el efecto de la ruptura de simetrías.
+\end{enumerate}
+
+El apartado de Pruebas de cada ejercicio describe sus instancias y su origen.
+
+\subsection{Métricas}
+
+Se registraron las estadísticas que reporta MiniZinc con la opción \texttt{-s} (Tabla~\ref{tab:metodologia-metricas}). La métrica principal es el número de nodos, porque mide el tamaño del árbol de búsqueda y no depende de la velocidad del equipo. Los tiempos se usan como métrica secundaria y solo se comparan entre corridas hechas en el mismo equipo. En el Sudoku y la secuencia mágica no se registró el tiempo de compilación.
+
+\begin{table}[htbp]
+    \caption{Métricas registradas en cada corrida}
+    \label{tab:metodologia-metricas}
+    \small
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash\hsize=0.6\hsize}Xll>{\raggedright\arraybackslash\hsize=1.4\hsize}X@{}}
+        \toprule
+        Métrica & MiniZinc & Columna del CSV & Qué indica \\
+        \midrule
+        Nodos & \texttt{nodes} & \texttt{nodos} & Tamaño del árbol explorado; métrica principal \\
+        Fallos & \texttt{failures} & \texttt{fallos} & Ramas que terminaron sin solución, es decir, decisiones equivocadas que hubo que deshacer \\
+        Profundidad & \texttt{peakDepth} & \texttt{profundidad} & Máximo número de decisiones encadenadas \\
+        Tiempo de búsqueda & \texttt{solveTime} & \texttt{tiempo\_s} & Segundos de búsqueda; depende del equipo \\
+        Tiempo de compilación & \texttt{flatTime} & \texttt{tiempo\_compilacion\_s} & Costo de construir el modelo, que crece con los precálculos \\
+        Estado & salida del solver & \texttt{estado} & \texttt{sat} (solución), \texttt{insat} (no hay solución) o \texttt{timeout} (límite de tiempo) \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Los árboles de búsqueda se describen con estas estadísticas.
+
+\subsection{Verificación de las soluciones}
+
+Que el solver devuelva una solución no basta para dar el modelo por correcto, porque un error en una restricción puede producir soluciones falsas o eliminar soluciones verdaderas. Por eso se usaron cuatro comprobaciones independientes del modelo:
+
+\begin{enumerate}
+    \item \textbf{Comprobación externa de cada solución.} Un script en Python corre el modelo, lee la solución impresa y la comprueba sin usar las restricciones de MiniZinc. En el Kakuro verifica que cada serie sume su pista y no repita dígitos; en la construcción de un rectángulo, que cada cuadrado quede dentro, que no haya solapamientos y que no queden huecos. Las 19 instancias factibles de esos dos ejercicios pasaron la comprobación. Del mismo modo se comprobaron todas las soluciones del Sudoku, la secuencia mágica y la reunión, enumeradas con \texttt{-a}: en el Sudoku, que cada fila, columna y subcuadrícula contenga los dígitos del 1 al 9 y respete las pistas; en la secuencia mágica, que cada $x_i$ cuente las apariciones de $i$; y en la reunión, que se cumplan todas las preferencias de la fila.
+    \item \textbf{Concordancia entre implementaciones.} Todas las variantes de \texttt{impl} de un ejercicio deben aceptar las mismas soluciones, salvo las que elimina la ruptura de simetrías. En las instancias de solución única, todas deben encontrar la misma.
+    \item \textbf{Confirmación de la infactibilidad con otro solver.} Cuando una instancia resulta infactible, se repite la corrida con Chuffed y con las variantes que no tienen restricciones redundantes ni de ruptura de simetrías. Así se descarta que esas restricciones hayan eliminado soluciones válidas.
+    \item \textbf{Comparación con un recorrido exhaustivo.} En el acertijo, en la secuencia mágica con $n \le 7$ y en la reunión con hasta 9 personas, un recorrido exhaustivo en Python de todas las asignaciones posibles encontró exactamente las mismas soluciones que MiniZinc.
+\end{enumerate}
+
+\subsection{Cómo leer las tablas de resultados}
+
+Salvo que se indique otra cosa, las tablas de resultados muestran el número de nodos que el solver exploró para encontrar la primera solución o para demostrar que no existe. \enquote{$>60$~s} indica que la corrida alcanzó el límite de tiempo, con los nodos explorados hasta ese momento entre paréntesis. \enquote{U} indica que el solver demostró que la instancia no tiene solución, y \enquote{M} abrevia millones. Los números siguen el formato español: coma decimal y espacio como separador de miles. Los datos completos de cada corrida, con fallos, profundidad y tiempos, están en \texttt{scr/<ejercicio>/results/}.

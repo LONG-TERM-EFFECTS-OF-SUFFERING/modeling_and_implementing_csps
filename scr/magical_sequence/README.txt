@@ -33,5 +33,8 @@ ARCHIVOS INCLUIDOS:
 EJECUCIÓN INDIVIDUAL:
   minizinc --solver gecode -s secuencia.mzn tests/secuencia_01.dzn -D "impl=3;strategy=2"
 
+ENUMERAR TODAS LAS SECUENCIAS DE LONGITUD n (opción -a):
+  minizinc --solver gecode -a secuencia.mzn tests/secuencia_01.dzn -D "impl=3;strategy=2"
+
 EJECUCIÓN DE TODAS LAS PRUEBAS:
   ./run_tests.sh gecode 60000

@@ -5,6 +5,18 @@
 %
 % Uso:
 %   minizinc --solver gecode -s secuencia.mzn tests/secuencia_01.dzn -D "impl=3;strategy=2"
+%   Con -a enumera todas las secuencias mágicas de longitud n.
+%
+% Parámetros de experimentación (-D):
+%   impl:
+%     1 = Modelo base [R1] (conteo de ocurrencias)
+%     2 = Modelo base + Redundante 1 [R1, RR1] (suma total = n)
+%     3 = Modelo completo [R1, RR1, RR2] (suma ponderada = 0)
+%   strategy:
+%     0 = Búsqueda por defecto de Gecode (sin anotación)
+%     1 = input_order, indomain_min, complete
+%     2 = first_fail, indomain_min, complete
+%     3 = dom_w_deg, indomain_min, complete
 % ==============================================================================
 
 % ------------------------------------------------------------------------------

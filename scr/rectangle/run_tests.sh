@@ -24,7 +24,7 @@ for dzn in tests/*.dzn; do
   for i in $IMPLS; do
     for s in $ESTRATEGIAS; do
       SALIDA=$(minizinc --solver "$SOLVER" -s --time-limit "$TIMEOUT" \
-               "${MODELO}.mzn" "$dzn" -D "impl=$i;strategy=$s" 2>&1)
+               "${MODELO}.mzn" "$dzn" -D "impl=$i;strategy=$s" 2>&1 | tr -d '\r')
       if   echo "$SALIDA" | grep -q "=====UNSATISFIABLE====="; then EST=insat
       elif echo "$SALIDA" | grep -q "^----------";              then EST=sat
       else EST=timeout; fi

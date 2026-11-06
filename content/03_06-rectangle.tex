@@ -203,9 +203,6 @@ Para el ejemplo del enunciado se recorrió el árbol completo con la estrategia 
     \end{tabular}
 \end{table}
 
-% TODO Figura: captura de Gecode Gist del ejemplo, todas las soluciones, con impl 2 y con impl 4, strategy 2
-% TODO Figura: captura de Gecode Gist de la instancia infactible 09 con impl 5 y strategy 3
-
 Con \texttt{impl} 1 y 2, casi la mitad de los nodos del árbol son fallos: el solver ubica cuadrados en posiciones que solo se revelan imposibles varios niveles más abajo. \texttt{cumulative} reduce el árbol a 195 nodos y 50 fallos. Con la cobertura exacta el árbol no tiene ningún fallo: sus 95 nodos son 48 hojas, todas soluciones, y 47 nodos de decisión. Ninguna rama se desperdicia, y el tamaño restante del árbol se debe solo a las 48 soluciones simétricas. La ruptura de simetrías elimina también eso, y el árbol se reduce a la raíz.
 
 En las instancias más grandes se repite el mismo patrón. Para demostrar que \texttt{09} no tiene solución con la estrategia 2, el árbol tiene 12\,439 nodos y profundidad 20 con \texttt{impl} 3; 1149 nodos y profundidad 9 con \texttt{impl} 4; y 39 nodos y profundidad 5 con \texttt{impl} 5. En un árbol de demostración de infactibilidad todas las hojas son fallos, así que su tamaño mide directamente cuánto trabajo repite el solver. El cuadrado de $112 \times 112$ se resuelve con \texttt{impl} 4 y la estrategia 3 en un árbol de 316 nodos, 150 fallos y profundidad 24.

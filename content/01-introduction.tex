@@ -1,3 +1,29 @@
-\section{Introduction}
+% Introducción. En APA 7 no lleva encabezado: el título repetido al inicio del texto hace de encabezado.
 
-% alcance, versión de MiniZinc y solvers usados
+Este informe presenta el modelamiento como problemas de satisfacción de restricciones (CSP), la implementación en MiniZinc \parencite{nethercote2007} y el análisis experimental de los seis problemas del Taller~1 de Programación por Restricciones. Para cada problema se busca un modelo correcto y, además, una búsqueda eficiente. Por eso, en cada ejercicio se estudia cómo cambian el tamaño del árbol de búsqueda y el tiempo de respuesta según la forma de implementar las restricciones, las restricciones redundantes, la ruptura de simetrías y la estrategia de distribución. La Tabla~\ref{tab:intro-problemas} resume los seis problemas en el orden en que aparecen en el informe.
+
+\begin{table}[htbp]
+    \caption{Problemas del taller}
+    \label{tab:intro-problemas}
+    \small
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.22\textwidth}LL@{}}
+        \toprule
+        Problema & Qué se decide & Requisitos propios del enunciado \\
+        \midrule
+        Acertijo lógico & Edad, apellido y música preferida de cada uno de tres amigos & Modelo y estrategia de distribución \\
+        Secuencia mágica & Una secuencia $x_0, \dots, x_{n-1}$ en la que cada $i$ aparece exactamente $x_i$ veces & Enumerar todas las secuencias para un $n$ dado; agregar dos restricciones redundantes dadas y explicar por qué lo son \\
+        Sudoku & El dígito de cada casilla de una cuadrícula de $9 \times 9$ & Comparar implementaciones de las restricciones y estrategias de distribución \\
+        Ubicación de personas en una reunión & La posición de cada persona en una fila & Aceptar el formato de entrada del enunciado, con preferencias \texttt{next}, \texttt{separate} y \texttt{distance} \\
+        Kakuro & El dígito de cada casilla blanca & Comparar implementaciones de las restricciones y estrategias de distribución \\
+        Construcción de un rectángulo & La posición de cada cuadrado & Diseñar una estrategia de distribución \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Todos los ejercicios siguen el mismo esquema. El modelo se describe con la notación del curso \parencite{apt2003principles}: parámetros, variables con su significado y su dominio, y restricciones expresadas formalmente, independientes de la implementación. En el Sudoku, la secuencia mágica, el Kakuro y el rectángulo, las restricciones del problema se etiquetan R1, R2, \ldots; las redundantes, RR1, RR2, \ldots; y las de ruptura de simetrías, RS1, RS2, \ldots. Las mismas etiquetas aparecen en los comentarios del código, de modo que cada restricción del informe se puede ubicar en su modelo.
+
+Cada modelo es un único archivo \texttt{.mzn} con dos parámetros de experimentación que se fijan al ejecutarlo: \texttt{impl}, que elige la implementación de las restricciones, y \texttt{strategy}, que elige la anotación de búsqueda. Cada valor de \texttt{impl} agrega un solo elemento al anterior, por ejemplo una restricción global en lugar de su descomposición, una restricción redundante o la ruptura de simetrías. Así, la diferencia entre dos variantes consecutivas mide el efecto de ese elemento.
+
+Los modelos se implementaron en MiniZinc~2.9.3 y se resolvieron con Gecode~6.3.0 \parencite{gecode}, salvo las corridas del Sudoku y la secuencia mágica, hechas en el equipo de su autor (ver Metodología experimental). El solver Chuffed~0.13.2 se usó solo para verificar resultados y como punto de comparación. La Metodología experimental describe el protocolo de pruebas, común a todos los ejercicios. La sección Ejercicios presenta cada problema con los apartados que exige el enunciado: descripción del problema, modelo, detalles de implementación, estrategias de búsqueda, pruebas, análisis de los árboles de búsqueda, análisis de resultados y conclusiones. El archivo \texttt{Readme.txt} de la entrega enumera los archivos y explica cómo ejecutarlos.
+
+% TODO: confirmar con Santiago qué versión de MiniZinc y Gecode usó en el Sudoku y la secuencia mágica.

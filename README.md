@@ -1,6 +1,6 @@
 # Modeling and implementing CSPs
 
-Workshop 1 (*Taller 1: Modelamiento e implementación de CSPs*) of *Programación por Restricciones*, Universidad del Valle. Six problems are modeled as constraint satisfaction problems, implemented in MiniZinc, tested, and written up in one LaTeX report.
+Workshop 1 (_Taller 1: Modelamiento e implementación de CSPs_) of _Programación por Restricciones_, Universidad del Valle. Six problems are modeled as constraint satisfaction problems, implemented in MiniZinc, tested, and written up in one LaTeX report.
 
 [`statement.pdf`](statement.pdf) is the assignment. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before adding an exercise.
 
@@ -10,18 +10,18 @@ Workshop 1 (*Taller 1: Modelamiento e implementación de CSPs*) of *Programació
 
 - Orlando Alexis Rengifo Mejia (2223878).
 
--
+- Santiago Nuñez Ramirez (2225625).
 
 ## Exercises
 
-| § | Problem | Model file | Code folder | Report section | Owner | Status |
-|---|---|---|---|---|---|---|
-| 2.1 | Sudoku | `sudoku.mzn` | `scr/sudoku/` | `content/03_03-sudoku.tex` | Santiago | Done |
-| 2.2 | Kakuro | `kakuro.mzn` | `scr/kakuro/` | `content/03_05-kakuro.tex` | Brandon | Done; Gist screenshots missing |
-| 2.3 | Secuencia mágica | `secuencia.mzn` | `scr/magical_sequence/` | `content/03_02-magical_sequence.tex` | Santiago | Done |
-| 2.4 | Acertijo lógico | `acertijo.mzn` | `scr/logic_puzzle/` | `content/03_01-logic_puzzle.tex` | Alexis | Code and tests done; report pending |
-| 2.5 | Ubicación de personas en una reunión | `reunion.mzn` | `scr/meeting/` | `content/03_04-meeting.tex` | Alexis | Code and tests done; report pending |
-| 2.6 | Construcción de un rectángulo | `rectangulo.mzn` | `scr/rectangle/` | `content/03_06-rectangle.tex` | Brandon | Done; Gist screenshots missing |
+| §   | Problem                              | Model file       | Code folder             | Report section                       | Owner    | Status                         |
+| --- | ------------------------------------ | ---------------- | ----------------------- | ------------------------------------ | -------- | ------------------------------ |
+| 2.1 | Sudoku                               | `sudoku.mzn`     | `scr/sudoku/`           | `content/03_03-sudoku.tex`           | Santiago | Done                           |
+| 2.2 | Kakuro                               | `kakuro.mzn`     | `scr/kakuro/`           | `content/03_05-kakuro.tex`           | Brandon  | Done                           |
+| 2.3 | Secuencia mágica                     | `secuencia.mzn`  | `scr/magical_sequence/` | `content/03_02-magical_sequence.tex` | Santiago | Done                           |
+| 2.4 | Acertijo lógico                      | `acertijo.mzn`   | `scr/logic_puzzle/`     | `content/03_01-logic_puzzle.tex`     | Alexis   | Done                           |
+| 2.5 | Ubicación de personas en una reunión | `reunion.mzn`    | `scr/meeting/`          | `content/03_04-meeting.tex`          | Alexis   | Done                           |
+| 2.6 | Construcción de un rectángulo        | `rectangulo.mzn` | `scr/rectangle/`        | `content/03_06-rectangle.tex`        | Brandon  | Done                           |
 
 § is the section of the statement. The report presents the exercises in the order of their report files (03_01 to 03_06).
 
@@ -77,7 +77,3 @@ latexmk -C    # removes the build output
 
 ## Open items
 
-- [ ] `front_page.tex`: teammates' names, course name and professor. The statement names Juan Francisco Díaz Frías; the front page currently says Robinson Andrey Duque Agudelo.
-- [ ] Introducción and Metodología experimental sections (`content/01-introduction.tex`, `content/02-experimental_methodology.tex`).
-- [ ] Gecode Gist screenshots for Kakuro and rectangle (marked `% TODO Figura` in their report files).
-- [ ] Exercises 2.1 and 2.3; report sections for 2.4 and 2.5.
